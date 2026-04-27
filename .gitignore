@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+venv/
+.venv/
+env/
+__pycache__/
+*.pyc
+
+# Environment & Keys
+.env
+*.key
+
+# Build & Dist
+dist/
+build/
+.vite/
+
+# AI / Data (Keep local, do not commit raw index)
+ai-services/faiss_index.bin
+ai-services/faiss_meta.json
+ai-services/knowledge_base.jsonl
+ai-services/temp_uploads/
+
+# OS Specific
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+*.swp

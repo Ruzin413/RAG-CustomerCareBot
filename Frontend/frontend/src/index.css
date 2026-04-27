@@ -1,0 +1,89 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary-50: #eff6ff;
+  --color-primary-100: #dbeafe;
+  --color-primary-200: #bfdbfe;
+  --color-primary-300: #93c5fd;
+  --color-primary-400: #60a5fa;
+  --color-primary-500: #3b82f6;
+  --color-primary-600: #2563eb;
+  --color-primary-700: #1d4ed8;
+  --color-primary-800: #1e40af;
+  --color-primary-900: #1e3a8a;
+  --color-primary-950: #172554;
+
+  --color-dark-50: #f8fafc;
+  --color-dark-100: #f1f5f9;
+  --color-dark-200: #e2e8f0;
+  --color-dark-300: #cbd5e1;
+  --color-dark-400: #94a3b8;
+  --color-dark-500: #64748b;
+  --color-dark-600: #475569;
+  --color-dark-700: #334155;
+  --color-dark-800: #1e293b;
+  --color-dark-900: #0f172a;
+  --color-dark-950: #020617;
+
+  @keyframes blob {
+    0% {
+      transform: translate(0px, 0px) scale(1);
+    }
+
+    33% {
+      transform: translate(30px, -50px) scale(1.1);
+    }
+
+    66% {
+      transform: translate(-20px, 20px) scale(0.9);
+    }
+
+    100% {
+      transform: translate(0px, 0px) scale(1);
+    }
+  }
+
+  --animate-blob: blob 7s infinite;
+}
+
+@utility animation-delay-2000 {
+  animation-delay: 2s;
+}
+
+@utility animation-delay-4000 {
+  animation-delay: 4s;
+}
+
+@layer base {
+  body {
+    @apply bg-dark-950 text-slate-200 selection:bg-primary-500/30;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+}
+
+@layer components {
+  .glass {
+    @apply bg-dark-900/40 backdrop-blur-xl border border-slate-700/50 shadow-2xl;
+  }
+
+  .chat-bubble-user {
+    @apply bg-gradient-to-br from-primary-600 to-indigo-600 text-white rounded-2xl rounded-tr-none py-3 px-5 shadow-lg shadow-primary-900/20 max-w-[85%] self-end;
+  }
+
+  .chat-bubble-bot {
+    @apply bg-dark-800/80 border border-slate-700/50 text-slate-100 rounded-2xl rounded-tl-none py-3 px-5 shadow-xl max-w-[85%] self-start;
+  }
+
+  .chat-bubble-fallback {
+    @apply bg-amber-500/5 border border-amber-500/30 text-slate-100 rounded-2xl rounded-tl-none py-3 px-5 shadow-xl max-w-[85%] self-start;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
