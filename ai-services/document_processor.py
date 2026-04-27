@@ -57,9 +57,7 @@ class DocumentProcessor:
             for page in doc:
                 text = page.get_text().strip()
                 if text:
-                    # Add page marker for context
-                    page_content = f"[PAGE {page.number + 1}]\n{text}"
-                    pages_text.append(page_content)
+                    pages_text.append(text)
                 
                 if (page.number + 1) % 5 == 0 or (page.number + 1) == total_pages:
                     logger.info(f"  - Extracted page {page.number + 1}/{total_pages}...")
@@ -86,7 +84,7 @@ class DocumentProcessor:
                         slide_content.append(shape.text.strip())
                 
                 if slide_content:
-                    text = f"[SLIDE {i+1}]\n" + "\n".join(slide_content)
+                    text = "\n".join(slide_content)
                     slides_text.append(text)
                 
                 if (i + 1) % 10 == 0:

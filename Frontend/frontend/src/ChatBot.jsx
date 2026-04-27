@@ -1,9 +1,11 @@
 import { useState, useRef, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 const GLASS_STYLE = "bg-dark-900/60 backdrop-blur-2xl border border-slate-700/50 shadow-2xl";
 const GRADIENT_TEXT = "bg-clip-text text-transparent bg-gradient-to-r from-primary-400 to-indigo-400 font-extrabold";
 
 function ChatBot() {
+  const navigate = useNavigate()
   const [messages, setMessages] = useState([
     { id: 1, text: "Hello! I'm your AI Customer Assistant. How can I help you today?", sender: 'bot' }
   ])
@@ -43,6 +45,13 @@ function ChatBot() {
         source: data.source
       }
       setMessages(prev => [...prev, botMessage])
+
+      // Handle Redirection
+      if (data.redirect_to) {
+        setTimeout(() => {
+          navigate(data.redirect_to)
+        }, 1500)
+      }
     } catch (error) {
       console.error('Chat error:', error)
       const errorMessage = {

@@ -153,6 +153,7 @@ def chat():
             "status": "success",
             "intent": result["intent"],
             "answer": result["reply"],
+            "redirect_to": result.get("redirect_to"),
             "source": "Knowledge Base" if result["context_found"] else "Fallback (Groq)",
             "metadata": {
                 "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),

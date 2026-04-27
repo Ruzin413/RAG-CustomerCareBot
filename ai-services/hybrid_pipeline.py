@@ -20,11 +20,10 @@ class HybridPipeline:
         self.vector_store = vector_store
         self.groq_client = Groq(api_key=groq_api_key) if groq_api_key else None
         self.lock = threading.Lock()
-        
+
         logger.info(f"🚀 Initializing Hybrid Pipeline on {self.device}")
-        
-        # Layer A: Intent Classification (TinyBERT)
-        self.intent_model_name = "huawei-noah/TinyBERT_General_4L_312D"
+        # Layer A: Intent Classification (MobileBERT)
+        self.intent_model_name = "google/mobilebert-uncased"
         try:
             self.intent_tokenizer = AutoTokenizer.from_pretrained(self.intent_model_name)
             self.intent_model = AutoModelForSequenceClassification.from_pretrained(
@@ -32,9 +31,9 @@ class HybridPipeline:
                 num_labels=5,
                 low_cpu_mem_usage=True
             ).to(self.device)
-            logger.info("✓ TinyBERT intent classifier loaded")
+            logger.info("✓ MobileBERT intent classifier loaded")
         except Exception as e:
-            logger.warning(f"⚠️ Could not load TinyBERT: {e}. Using heuristics only.")
+            logger.warning(f"⚠️ Could not load MobileBERT: {e}. Using heuristics only.")
             self.intent_model = None
             self.intent_tokenizer = None
         
@@ -56,7 +55,7 @@ class HybridPipeline:
             self.nlg_tokenizer = None
         
         # Intent categories
-        self.intents = ["greeting", "faq", "complaint", "support", "goodbye"]
+        self.intents = ["greeting", "faq", "complaint", "support", "goodbye", "navigate"]
         
         # Template-based responses for reliability
         self.templates = {
@@ -98,6 +97,10 @@ class HybridPipeline:
         if words.intersection(support_words):
             return "support"
         
+        navigate_words = {"go", "show", "open", "navigate", "report", "history", "payment", "pay"}
+        if words.intersection(navigate_words) or any(w in text_lower for w in ["report", "history", "payment"]):
+            return "navigate"
+        
         return "faq"
 
     def stage1_rag_retrieve(self, text, intent):
@@ -129,7 +132,7 @@ class HybridPipeline:
         or GPT-2 locally.
         """
         if self.groq_client:
-            prompt = f"SYSTEM: You are a helpful support agent. Answer ONLY from the provided context. Be concise and polite.\n\nCONTEXT:\n{context}\n\nUSER: {text}\nASSISTANT:"
+            prompt = f"SYSTEM: You are a helpful support agent. Answer ONLY from the provided context. Be concise and polite. IMPORTANT: Do not mention page numbers or slide numbers in your response.\n\nCONTEXT:\n{context}\n\nUSER: {text}\nASSISTANT:"
             try:
                 response = self.groq_client.chat.completions.create(
                     model="llama-3.1-8b-instant",
@@ -168,7 +171,7 @@ class HybridPipeline:
                     {"role": "user", "content": text}
                 ],
                 temperature=0.3,
-                max_tokens=200
+                max_tokens=500
             )
             answer = response.choices[0].message.content.strip()
             
@@ -199,6 +202,22 @@ class HybridPipeline:
             elif intent == "goodbye":
                 reply = random.choice(self.templates["goodbye"])
                 context_found = True
+            elif intent == "navigate":
+                # Determine destination
+                dest = "chat"
+                if "report" in text.lower(): dest = "report"
+                elif "history" in text.lower(): dest = "history"
+                elif "pay" in text.lower(): dest = "payment"
+                
+                reply = f"Sure! Redirecting you to the {dest} page now."
+                context_found = True
+                return {
+                    "intent": intent,
+                    "context_found": context_found,
+                    "reply": reply,
+                    "redirect_to": f"/{dest}" if dest != "chat" else "/",
+                    "timing": {"total_latency": f"{(time.time() - start_time) * 1000:.2f}ms"}
+                }
             else:
                 # Stage 1: RAG-first (always)
                 logger.info(f"🔎 Stage 1: Searching knowledge base for context...")
