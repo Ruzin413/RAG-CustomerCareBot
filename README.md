@@ -121,4 +121,4 @@ npm run dev
 ## 📄 License
 Distributed under the MIT License. See `LICENSE` for more information.
 
-Developed with ❤️ by the RAG-Bot Team.
+Developed by Rujin Manandhar
