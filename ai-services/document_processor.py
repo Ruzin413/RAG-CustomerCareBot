@@ -4,16 +4,15 @@ import logging
 from docx import Document
 from pptx import Presentation
 import fitz  # PyMuPDF
-from groq import Groq
+
 from transformers import AutoTokenizer
 import difflib
 
 logger = logging.getLogger(__name__)
 
 class DocumentProcessor:
-    def __init__(self, groq_api_key):
-        """Initialize document processor with Groq API"""
-        self.client = Groq(api_key=groq_api_key)
+    def __init__(self):
+        """Initialize document processor"""
         
         # Load tokenizer for token estimation
         try:

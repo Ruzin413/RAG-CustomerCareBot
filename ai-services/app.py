@@ -27,16 +27,10 @@ logger = logging.getLogger(__name__)
 
 # Constants
 KNOWLEDGE_BASE_FILE = "knowledge_base.jsonl" # Kept for historical/export purposes if needed
-GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
-
-if not GROQ_API_KEY:
-    logger.error("GROQ_API_KEY not found in environment variables!")
-    raise ValueError("GROQ_API_KEY is required")
-
 # Initialize Processors and Vector Store
-doc_processor = DocumentProcessor(GROQ_API_KEY)
+doc_processor = DocumentProcessor()
 vector_store = VectorStore()
-ai_pipeline = HybridPipeline(vector_store=vector_store, groq_api_key=GROQ_API_KEY)
+ai_pipeline = HybridPipeline(vector_store=vector_store)
 
 @app.route('/upload', methods=['POST'])
 def upload_document():
@@ -178,7 +172,7 @@ def reset_model():
             os.remove("faiss_meta.json")
         
         vector_store = VectorStore()
-        ai_pipeline = HybridPipeline(vector_store=vector_store, groq_api_key=GROQ_API_KEY)
+        ai_pipeline = HybridPipeline(vector_store=vector_store)
         
         logger.info("✅ Vector store reset successfully")
         
