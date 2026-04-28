@@ -11,7 +11,29 @@ function ChatBot() {
   ])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [knowledgeBases, setKnowledgeBases] = useState({})
+  const [selectedKB, setSelectedKB] = useState("")
   const messagesEndRef = useRef(null)
+
+  useEffect(() => {
+    const fetchKBs = async () => {
+      try {
+        const response = await fetch('http://localhost:8001/knowledge-bases')
+        if (response.ok) {
+          const data = await response.json()
+          setKnowledgeBases(data.knowledge_bases)
+          // Default to first available KB if current selection is invalid
+          const kbs = Object.keys(data.knowledge_bases).filter(kb => kb !== "General")
+          if (kbs.length > 0 && (!selectedKB || selectedKB === "General")) {
+            setSelectedKB(kbs[0])
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch KBs:", err)
+      }
+    }
+    fetchKBs()
+  }, [])
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -32,7 +54,10 @@ function ChatBot() {
       const response = await fetch('http://localhost:8001/process', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: input })
+        body: JSON.stringify({ 
+          message: input,
+          kb_name: selectedKB 
+        })
       })
       if (!response.ok) throw new Error('Failed to connect to backend')
 
@@ -66,7 +91,39 @@ function ChatBot() {
     }
   }
   return (
-    <div className={`flex flex-col h-[600px] w-full max-w-2xl mx-auto rounded-3xl overflow-hidden ${GLASS_STYLE}`}>
+    <div className="relative min-h-screen flex flex-col items-center justify-center p-6 bg-dark-950 overflow-hidden">
+      {/* Background Blobs */}
+      <div className="absolute top-0 -left-4 w-72 h-72 bg-primary-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob"></div>
+      <div className="absolute top-0 -right-4 w-72 h-72 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob animation-delay-2000"></div>
+
+      <div className="container max-w-4xl relative z-10 flex flex-col items-center">
+        <header className="text-center mb-8">
+          <h1 className={`text-4xl md:text-5xl mb-4 tracking-tight ${GRADIENT_TEXT}`}>
+            FT Customer Care Bot
+          </h1>
+
+          <div className="flex bg-dark-800/80 p-1.5 rounded-2xl border border-slate-700/50 shadow-lg backdrop-blur-md">
+            <button
+              className="px-8 py-2.5 rounded-xl font-bold text-sm bg-primary-600 text-white shadow-lg"
+            >
+              Chat Interface
+            </button>
+            <button
+              onClick={() => navigate('/knowledge-base')}
+              className="px-8 py-2.5 rounded-xl font-bold text-sm text-slate-400 hover:text-slate-200 transition-all duration-300"
+            >
+              Knowledge Base
+            </button>
+            <button
+              onClick={() => navigate('/systems')}
+              className="px-8 py-2.5 rounded-xl font-bold text-sm text-slate-400 hover:text-slate-200 transition-all duration-300"
+            >
+              Manage Systems
+            </button>
+          </div>
+        </header>
+
+        <div className={`flex flex-col h-[600px] w-full max-w-2xl mx-auto rounded-3xl overflow-hidden ${GLASS_STYLE}`}>
       {/* Chat Header */}
       <div className="p-6 border-b border-slate-700/50 flex items-center justify-between bg-dark-800/30">
         <div className="flex items-center gap-4">
@@ -81,6 +138,19 @@ function ChatBot() {
             </div>
           </div>
         </div>
+        <div className="flex items-center gap-3">
+          <label htmlFor="kb-select" className="text-[10px] font-bold text-slate-500 uppercase tracking-widest hidden sm:block">Knowledge Base:</label>
+          <select
+            id="kb-select"
+            value={selectedKB}
+            onChange={(e) => setSelectedKB(e.target.value)}
+            className="bg-dark-900/80 border border-slate-700/50 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-primary-500/50 cursor-pointer hover:border-slate-600 transition-all shadow-inner"
+          >
+            {Object.keys(knowledgeBases).filter(kb => kb !== "General").map(kb => (
+              <option key={kb} value={kb}>{kb}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {/* Messages Area */}
@@ -91,10 +161,10 @@ function ChatBot() {
             className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'} animate-in fade-in slide-in-from-bottom-2 duration-300`}
           >
             <div className={
-              msg.sender === 'user' 
-                ? 'chat-bubble-user' 
-                : msg.source?.includes('Fallback') 
-                  ? 'chat-bubble-fallback' 
+              msg.sender === 'user'
+                ? 'chat-bubble-user'
+                : msg.source?.includes('Fallback')
+                  ? 'chat-bubble-fallback'
                   : 'chat-bubble-bot'
             }>
               {msg.text}
@@ -143,8 +213,9 @@ function ChatBot() {
           </button>
         </div>
       </form>
+        </div>
+      </div>
     </div>
   )
 }
-
 export default ChatBot

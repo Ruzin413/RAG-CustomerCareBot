@@ -11,70 +11,49 @@ const KnowledgeBase = () => {
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState(null);
   const [dragging, setDragging] = useState(false);
-  const [unverifiedItems, setUnverifiedItems] = useState([]);
-  const [editingId, setEditingId] = useState(null);
-  const [editText, setEditText] = useState('');
+  const [knowledgeBases, setKnowledgeBases] = useState({});
+  const [kbName, setKbName] = useState("");
+  const [kbJsonFile, setKbJsonFile] = useState("");
+  const [kbBinFile, setKbBinFile] = useState("");
+  const [fileNames, setFileNames] = useState({}); // Mapping of index to custom name
   const fileInputRef = useRef(null);
-
-  const fetchUnverified = async () => {
+  const fetchKBs = async () => {
     try {
-      const response = await fetch('http://localhost:8001/unverified');
-      const data = await response.json();
+      const response = await fetch('http://localhost:8001/knowledge-bases');
       if (response.ok) {
-        setUnverifiedItems(data.items || []);
+        const data = await response.json();
+        setKnowledgeBases(data.knowledge_bases);
       }
     } catch (err) {
-      console.error('Failed to fetch unverified items:', err);
+      console.error("Failed to fetch KBs:", err);
     }
   };
-
   useEffect(() => {
-    fetchUnverified();
+    fetchKBs();
   }, []);
 
-  const handleVerify = async (chunk_id, text) => {
-    try {
-      const response = await fetch('http://localhost:8001/unverified/update', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chunk_id, text })
-      });
-      if (response.ok) {
-        setEditingId(null);
-        fetchUnverified();
-        setStatus({ success: true, message: "Knowledge item verified and saved!", type: "success" });
-      }
-    } catch (err) {
-      console.error('Failed to verify item:', err);
-    }
-  };
-
-  const handleDeleteMemory = async (chunk_id) => {
-    if (!window.confirm("Delete this memory item?")) return;
-    try {
-      const response = await fetch('http://localhost:8001/unverified/delete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chunk_id })
-      });
-      if (response.ok) {
-        fetchUnverified();
-      }
-    } catch (err) {
-      console.error('Failed to delete item:', err);
-    }
-  };
 
   const handleFileChange = (e) => {
     const selectedFiles = Array.from(e.target.files);
     if (selectedFiles.length > 0) {
+      const startIdx = files.length;
+      const newNames = { ...fileNames };
+      selectedFiles.forEach((f, i) => {
+        newNames[startIdx + i] = f.name;
+      });
       setFiles(prev => [...prev, ...selectedFiles]);
+      setFileNames(newNames);
       setStatus(null);
     }
   };
 
   const removeFile = (index) => {
     setFiles(prev => prev.filter((_, i) => i !== index));
+    const newNames = {};
+    files.filter((_, i) => i !== index).forEach((f, i) => {
+      newNames[i] = fileNames[i < index ? i : i + 1];
+    });
+    setFileNames(newNames);
   };
 
   const uploadFile = async () => {
@@ -83,9 +62,13 @@ const KnowledgeBase = () => {
     setStatus({ message: `Analyzing ${files.length} document(s) and generating knowledge...`, type: "info" });
 
     const formData = new FormData();
-    files.forEach(f => {
+    files.forEach((f, i) => {
       formData.append('file', f);
+      formData.append('custom_names', fileNames[i] || f.name);
     });
+    formData.append('kb_name', kbName || "General");
+    formData.append('jsonfile', kbJsonFile);
+    formData.append('binfile', kbBinFile);
 
     try {
       const response = await fetch('http://localhost:8001/upload', {
@@ -97,12 +80,13 @@ const KnowledgeBase = () => {
       if (response.ok) {
         setStatus({
           success: true,
-          message: result.message || "Knowledge base updated and model re-trained successfully!",
+          message: result.message || "Knowledge base updated successfully!",
           data: result,
           type: "success"
         });
         setFiles([]);
-        fetchUnverified();
+        setFileNames({});
+        fetchKBs();
       } else {
         throw new Error(result.message || "Failed to process documents");
       }
@@ -113,57 +97,95 @@ const KnowledgeBase = () => {
     }
   };
 
-  const resetModel = async () => {
-    if (!window.confirm("Are you sure you want to delete all trained data and reset the model?")) return;
-    setLoading(true);
-    try {
-      const response = await fetch('http://localhost:8001/reset', { method: 'POST' });
-      if (response.ok) {
-        setStatus({ success: true, message: "Knowledge base cleared!", type: "success" });
-        setUnverifiedItems([]);
-      }
-    } catch (err) {
-      setStatus({ success: false, message: err.message, type: "error" });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
-    <div className="min-h-screen bg-dark-950 p-6 flex flex-col items-center overflow-hidden relative">
+    <div className="relative min-h-screen flex flex-col items-center p-6 bg-dark-950 overflow-x-hidden">
       {/* Background Blobs */}
       <div className="absolute top-0 -left-4 w-72 h-72 bg-primary-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob"></div>
       <div className="absolute top-0 -right-4 w-72 h-72 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob animation-delay-2000"></div>
-      <div className="absolute -bottom-8 left-20 w-72 h-72 bg-fuchsia-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob animation-delay-4000"></div>
 
-      <div className="w-full max-w-5xl relative z-10">
-        <header className="w-full flex flex-col items-center mb-16">
-          {/* System Status Pill */}
-          <div className="mb-6 flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary-500/10 border border-primary-500/20 backdrop-blur-md">
-            <div className="w-2 h-2 rounded-full bg-primary-500 shadow-[0_0_8px_rgba(var(--primary-rgb),0.8)]"></div>
-            <span className="text-[10px] font-bold text-primary-400 uppercase tracking-[0.2em]">Knowledge Sync Active</span>
-          </div>
+      <div className="container max-w-4xl relative z-10 flex flex-col items-center">
+        <header className="text-center mb-12">
+          <h1 className={`text-4xl md:text-5xl mb-4 tracking-tight ${GRADIENT_TEXT}`}>
+            FT Customer Care Bot
+          </h1>
 
-          <div className="w-full flex flex-col md:flex-row justify-between items-center gap-8">
-            <div className="text-center md:text-left">
-              <h1 className={`text-5xl md:text-6xl mb-3 tracking-tight ${GRADIENT_TEXT}`}>
-                Brain Base
-              </h1>
-              <p className="text-slate-400 font-medium">Neural network ingestion and verification portal</p>
-            </div>
-            
-            <button 
+          <div className="flex bg-dark-800/80 p-1.5 rounded-2xl border border-slate-700/50 shadow-lg backdrop-blur-md">
+            <button
               onClick={() => navigate('/')}
-              className="group relative px-8 py-3.5 rounded-2xl bg-dark-900 text-slate-300 border border-slate-700/50 transition-all hover:border-primary-500/50 hover:text-white shadow-xl flex items-center gap-3 overflow-hidden"
+              className="px-8 py-2.5 rounded-xl font-bold text-sm text-slate-400 hover:text-slate-200 transition-all duration-300"
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-primary-600/10 to-indigo-600/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-              <span className="text-lg transition-transform group-hover:-translate-x-1">←</span>
-              <span className="font-bold text-xs uppercase tracking-widest">Return to Portal</span>
+              Chat Interface
+            </button>
+            <button
+              className="px-8 py-2.5 rounded-xl font-bold text-sm bg-primary-600 text-white shadow-lg"
+            >
+              Knowledge Base
+            </button>
+            <button
+              onClick={() => navigate('/systems')}
+              className="px-8 py-2.5 rounded-xl font-bold text-sm text-slate-400 hover:text-slate-200 transition-all duration-300"
+            >
+              Manage Systems
             </button>
           </div>
         </header>
 
         <main className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+          {/* KB Configuration */}
+          <div className={`${GLASS_STYLE} rounded-3xl p-8 mb-8`}>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-1.5 h-6 bg-primary-500 rounded-full"></div>
+              <h3 className="text-xl font-bold text-white uppercase tracking-wider">Target System Configuration</h3>
+            </div>
+
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">System Name</label>
+                <input
+                  type="text"
+                  value={kbName}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setKbName(val);
+                    const safeName = val.toLowerCase().replace(/[^a-z0-9]/g, '');
+                    if (safeName) {
+                      setKbJsonFile(`${safeName}_meta.json`);
+                      setKbBinFile(`${safeName}_index.bin`);
+                    }
+                  }}
+                  placeholder="e.g., E-attendance, Banking..."
+                  className="w-full bg-dark-900/80 border border-slate-700/50 rounded-2xl px-6 py-4 text-white focus:outline-none focus:ring-2 focus:ring-primary-500/50 transition-all text-lg font-medium"
+                />
+                <p className="text-[9px] text-slate-500 px-1 italic">
+                  Files: <span className="text-primary-400/80">{kbJsonFile || '...'}</span> and <span className="text-primary-400/80">{kbBinFile || '...'}</span>
+                </p>
+              </div>
+
+              {/* Quick Select */}
+              {Object.keys(knowledgeBases).filter(kb => kb !== "General").length > 0 && (
+                <div className="pt-4 border-t border-slate-700/30">
+                  <p className="text-[9px] font-bold text-slate-600 uppercase tracking-widest mb-3">Existing Templates:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {Object.keys(knowledgeBases).filter(kb => kb !== "General").map(kb => (
+                      <button
+                        key={kb}
+                        onClick={() => {
+                          setKbName(kb);
+                          setKbJsonFile(knowledgeBases[kb].jsonfile);
+                          setKbBinFile(knowledgeBases[kb].binfile);
+                        }}
+                        className="px-3 py-1.5 rounded-lg bg-dark-800 border border-slate-700/50 text-[10px] text-slate-400 hover:text-white hover:border-primary-500/50 transition-all font-bold uppercase tracking-tight"
+                      >
+                        {kb}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* Upload Zone */}
           <div
             className={`${UPLOAD_CARD} ${dragging ? 'ring-4 ring-primary-500/50 scale-[1.02]' : ''}`}
@@ -173,42 +195,47 @@ const KnowledgeBase = () => {
               e.preventDefault();
               setDragging(false);
               const droppedFiles = Array.from(e.dataTransfer.files);
-              if (droppedFiles.length > 0) setFiles(prev => [...prev, ...droppedFiles]);
+              if (droppedFiles.length > 0) {
+                const startIdx = files.length;
+                const newNames = { ...fileNames };
+                droppedFiles.forEach((f, i) => { newNames[startIdx + i] = f.name; });
+                setFiles(prev => [...prev, ...droppedFiles]);
+                setFileNames(newNames);
+              }
             }}
             onClick={() => fileInputRef.current.click()}
           >
-            <input
-              type="file" ref={fileInputRef} onChange={handleFileChange}
-              className="hidden" accept=".pdf,.txt,.docx,.pptx,.ppt" multiple
-            />
+            <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".pdf,.txt,.docx,.pptx,.ppt" multiple />
             <div className="flex flex-col items-center text-center space-y-4">
               <div className={`w-20 h-20 rounded-2xl bg-primary-500/10 flex items-center justify-center text-4xl mb-2 transition-transform duration-500 ${loading ? 'animate-spin' : 'group-hover:scale-110'}`}>
                 {loading ? '⚙️' : '📁'}
               </div>
               <div className="space-y-1">
-                <h3 className="text-2xl font-semibold text-white">
-                  {files.length > 0 ? `${files.length} document(s) selected` : "Select documents"}
-                </h3>
-                <p className="text-slate-400">
-                  {files.length > 0
-                    ? `${(files.reduce((acc, f) => acc + f.size, 0) / 1024).toFixed(1)} KB total`
-                    : "Drag and drop your PDF, DOCX, PPTX or TXT here"}
-                </p>
+                <h3 className="text-2xl font-semibold text-white">{files.length > 0 ? `${files.length} document(s) selected` : "Select documents"}</h3>
+                <p className="text-slate-400">{files.length > 0 ? `${(files.reduce((acc, f) => acc + f.size, 0) / 1024).toFixed(1)} KB total` : "Drag and drop your PDF, DOCX, PPTX or TXT here"}</p>
               </div>
             </div>
           </div>
 
           {files.length > 0 && !loading && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3">
               {files.map((f, index) => (
-                <div key={index} className="flex items-center justify-between p-3 rounded-xl bg-dark-800/40 border border-slate-700/50 group">
-                  <div className="flex items-center gap-3 overflow-hidden">
-                    <span className="text-xl">📄</span>
-                    <div className="overflow-hidden">
-                      <p className="text-sm font-medium text-white truncate">{f.name}</p>
+                <div key={index} className="flex flex-col md:flex-row md:items-center justify-between p-4 rounded-2xl bg-dark-800/40 border border-slate-700/50 gap-4 group transition-all hover:border-slate-600/50">
+                  <div className="flex items-center gap-4 flex-1">
+                    <div className="w-10 h-10 rounded-xl bg-primary-500/10 flex items-center justify-center text-xl shrink-0">📄</div>
+                    <div className="flex-1 space-y-1">
+                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Original: {f.name}</p>
+                      <input
+                        type="text"
+                        value={fileNames[index] || ""}
+                        onChange={(e) => setFileNames({ ...fileNames, [index]: e.target.value })}
+                        placeholder="Rename this file..."
+                        className="w-full bg-dark-900/50 border border-slate-700/50 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary-500/50"
+                      />
                     </div>
                   </div>
-                  <button onClick={(e) => { e.stopPropagation(); removeFile(index); }} className="p-1.5 rounded-lg hover:bg-red-500/10 text-slate-500 hover:text-red-400">
+                  <button onClick={(e) => { e.stopPropagation(); removeFile(index); }} className="p-2 rounded-xl hover:bg-red-500/10 text-slate-500 hover:text-red-400 transition-colors">
+                    <span className="text-xs font-bold uppercase tracking-widest px-2">Remove</span>
                     ✕
                   </button>
                 </div>
@@ -222,11 +249,6 @@ const KnowledgeBase = () => {
                 Start Batch Ingestion
               </button>
             )}
-            {!loading && (
-              <button onClick={resetModel} className="w-full py-4 rounded-2xl border border-red-500/30 bg-red-500/10 text-red-400 font-semibold hover:bg-red-500 hover:text-white transition-all">
-                ⚠️ Delete Model & Data
-              </button>
-            )}
           </div>
 
           {status && (
@@ -236,79 +258,6 @@ const KnowledgeBase = () => {
             </div>
           )}
 
-          <div className="pt-8 border-t border-slate-700/30">
-            <h3 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
-              Unverified Knowledge
-              <span className="px-2 py-0.5 rounded-lg bg-primary-500/10 text-primary-400 text-sm font-bold">{unverifiedItems.length}</span>
-            </h3>
-            {unverifiedItems.length > 0 ? (
-              <div className="grid grid-cols-1 gap-4">
-                {unverifiedItems.map((item, index) => (
-                  <div key={item.chunk_id || index} className={`${GLASS_STYLE} p-6 rounded-3xl group transition-all hover:border-slate-600/50`}>
-                    <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-3">
-                           <span className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 text-[10px] font-bold uppercase tracking-wider">Conversation Memory</span>
-                           <span className="text-slate-600 text-xs">{item.created_at}</span>
-                        </div>
-                        
-                        {editingId === item.chunk_id ? (
-                          <textarea
-                            value={editText}
-                            onChange={(e) => setEditText(e.target.value)}
-                            className="w-full h-32 p-4 rounded-xl bg-dark-900 border border-primary-500/30 text-white text-sm focus:ring-2 focus:ring-primary-500/50 outline-none"
-                          />
-                        ) : (
-                          <p className="text-white text-sm leading-relaxed whitespace-pre-wrap">{item.text}</p>
-                        )}
-                      </div>
-                      
-                      <div className="flex md:flex-col gap-2 shrink-0">
-                        {editingId === item.chunk_id ? (
-                          <>
-                            <button 
-                              onClick={() => handleVerify(item.chunk_id, editText)}
-                              className="flex-1 md:w-28 px-4 py-2.5 bg-green-600 text-white rounded-xl text-xs font-bold hover:bg-green-500 transition-colors"
-                            >
-                              Save & Verify
-                            </button>
-                            <button 
-                              onClick={() => setEditingId(null)}
-                              className="flex-1 md:w-28 px-4 py-2.5 bg-dark-700 text-slate-300 rounded-xl text-xs font-bold hover:bg-dark-600 transition-colors"
-                            >
-                              Cancel
-                            </button>
-                          </>
-                        ) : (
-                          <>
-                            <button 
-                              onClick={() => {
-                                setEditingId(item.chunk_id);
-                                setEditText(item.text);
-                              }}
-                              className="flex-1 md:w-28 px-4 py-2.5 bg-primary-600 text-white rounded-xl text-xs font-bold hover:bg-primary-500 transition-colors"
-                            >
-                              Edit & Verify
-                            </button>
-                            <button 
-                              onClick={() => handleDeleteMemory(item.chunk_id)} 
-                              className="flex-1 md:w-28 px-4 py-2.5 bg-red-500/10 text-red-400 border border-red-500/20 rounded-xl text-xs font-bold hover:bg-red-500 hover:text-white transition-all"
-                            >
-                              Discard
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className={`${GLASS_STYLE} rounded-3xl p-12 text-center`}>
-                <p className="text-slate-500 font-medium">All knowledge is currently verified and integrated.</p>
-              </div>
-            )}
-          </div>
         </main>
       </div>
     </div>

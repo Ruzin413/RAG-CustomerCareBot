@@ -1,0 +1,10 @@
+{
+  "eHAJIRI": {
+    "jsonfile": "ehajiri_meta.json",
+    "binfile": "ehajiri_index.bin"
+  },
+  "TourBooking": {
+    "jsonfile": "tourbooking_meta.json",
+    "binfile": "tourbooking_index.bin"
+  }
+}

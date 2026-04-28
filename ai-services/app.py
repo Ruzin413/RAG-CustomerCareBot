@@ -26,85 +26,108 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Constants
-KNOWLEDGE_BASE_FILE = "knowledge_base.jsonl" # Kept for historical/export purposes if needed
+KB_CONFIG_FILE = "knowledge_bases.json"
+
+def load_kb_config():
+    if os.path.exists(KB_CONFIG_FILE):
+        try:
+            if os.path.getsize(KB_CONFIG_FILE) > 0:
+                with open(KB_CONFIG_FILE, 'r') as f:
+                    return json.load(f)
+        except Exception as e:
+            logger.error(f"⚠️ Error loading KB config: {e}. Resetting to empty.")
+    return {}
+
+def save_kb_config(config):
+    with open(KB_CONFIG_FILE, 'w') as f:
+        json.dump(config, f, indent=2)
+
 # Initialize Processors and Vector Store
 doc_processor = DocumentProcessor()
 vector_store = VectorStore()
 ai_pipeline = HybridPipeline(vector_store=vector_store)
 
-@app.route('/upload', methods=['POST'])
-def upload_document():
-    """Upload and process multiple documents directly into RAG Vector Store"""
-    start_time = time.time()
+def process_and_add_files(kb_name, uploaded_files, custom_names, target_kb, is_new_kb=False):
+    """Helper to process files and add them to a specific KB."""
+    # Ensure KB files exist
+    meta_path = target_kb['jsonfile']
+    index_path = target_kb['binfile']
     
-    if 'file' not in request.files:
-        return jsonify({"message": "No files uploaded"}), 400
+    # Load the target KB into the vector store first
+    vector_store.load_kb(index_path, meta_path)
     
-    files = request.files.getlist('file')
-    if not files or all(f.filename == '' for f in files):
-        return jsonify({"message": "No selected files"}), 400
-
-    logger.info(f"🚀 Batch upload started: {len(files)} files received")
+    # Track existing files to avoid duplicates
+    existing_files = set(item.get("source", {}).get("file") for item in vector_store.metadata)
     
     results = []
     total_chunks = 0
     failed_files = []
+    start_time = time.time()
 
-    for file in files:
-        if file.filename == '':
+    for file, custom_name in zip(uploaded_files, custom_names):
+        display_name = custom_name or file.filename
+        if not file.filename or not display_name:
+            continue
+            
+        if display_name in existing_files:
+            logger.warning(f"⚠️ Skipping '{display_name}': Already exists in '{kb_name}'.")
+            failed_files.append({"file": display_name, "error": "Already exists"})
             continue
             
         file_start_time = time.time()
-        logger.info(f"📄 Processing individual file: {file.filename}")
-        
         try:
-            # Step 1: Extraction
-            logger.info(f"⏳ Step 1: Extracting text from {file.filename}...")
+            # Extraction
             if file.filename.endswith('.docx'):
-                paragraphs = doc_processor.extract_text_from_docx(file)
+                units = doc_processor.extract_text_from_docx(file)
             elif file.filename.endswith('.pdf'):
-                paragraphs = doc_processor.extract_text_from_pdf(file)
+                units = doc_processor.extract_text_from_pdf(file)
             elif file.filename.endswith(('.pptx', '.ppt')):
-                paragraphs = doc_processor.extract_text_from_ppt(file)
+                units = doc_processor.extract_text_from_ppt(file)
             elif file.filename.endswith('.txt'):
-                # Simple text extraction for .txt files
                 text = file.read().decode('utf-8')
-                paragraphs = [p.strip() for p in text.split('\n\n') if p.strip()]
-                logger.info(f"✓ Extracted {len(paragraphs)} paragraphs from TXT")
+                units = [p.strip() for p in text.split('\n\n') if p.strip()]
             else:
-                logger.warning(f"⚠️ Unsupported format: {file.filename}")
                 failed_files.append({"file": file.filename, "error": "Unsupported format"})
                 continue
 
-            if not paragraphs:
-                logger.error(f"❌ No content in {file.filename}")
-                failed_files.append({"file": file.filename, "error": "No text content found"})
+            if not units:
+                failed_files.append({"file": display_name, "error": "No content extracted"})
                 continue
 
-            # Step 2: Chunking
-            chunks = doc_processor.extract_chunks(file.filename, paragraphs, target_tokens=300)
-            
-            # Step 3: Vector Storage
+            # Chunking
+            chunks = doc_processor.extract_chunks(display_name, units, kb_name=kb_name)
+            if not chunks:
+                failed_files.append({"file": display_name, "error": "No chunks generated"})
+                continue
+
+            # Storage
             vector_store.add_chunks(chunks)
-            
             total_chunks += len(chunks)
-            file_duration = time.time() - file_start_time
+            
             results.append({
-                "file": file.filename,
+                "file": display_name,
                 "chunks": len(chunks),
-                "duration": f"{file_duration:.2f}s"
+                "duration": f"{time.time() - file_start_time:.2f}s"
             })
-            logger.info(f"✅ Finished {file.filename} ({len(chunks)} chunks)")
-
+            logger.info(f"✅ Finished {display_name}")
         except Exception as e:
-            logger.error(f"❌ Error processing {file.filename}: {e}")
-            failed_files.append({"file": file.filename, "error": str(e)})
+            logger.error(f"❌ Error processing {display_name}: {e}")
+            failed_files.append({"file": display_name, "error": str(e)})
 
-    end_time = time.time()
-    total_duration = end_time - start_time
+    # Persist changes
+    if total_chunks > 0:
+        vector_store._save()
+        
+        if is_new_kb:
+            kb_config = load_kb_config()
+            kb_config[kb_name] = target_kb
+            save_kb_config(kb_config)
+            logger.info(f"🆕 Registered new KB: {kb_name}")
+    
+    total_duration = time.time() - start_time
     completion_time = time.strftime("%Y-%m-%d %H:%M:%S")
 
-    summary = {
+    return {
         "status": "success" if results else "error",
         "message": f"Processed {len(results)} files, {len(failed_files)} failed",
         "total_chunks": total_chunks,
@@ -112,15 +135,56 @@ def upload_document():
         "failed_files": failed_files,
         "processing_stats": {
             "total_time": f"{total_duration:.2f}s",
-            "completion_timestamp": completion_time,
-            "status": "Completed"
+            "completion_timestamp": completion_time
         }
     }
-    # Map back to keys frontend might expect for backward compatibility if needed
-    summary["chunks_generated"] = total_chunks
-    summary["domain"] = "Batch Ingestion"
-    logger.info(f"🏁 Batch complete: {total_chunks} total chunks in {total_duration:.2f}s")
-    return jsonify(summary), 200 if results or not failed_files else 207
+
+@app.route('/upload', methods=['POST'])
+def upload_document():
+    """Upload and process multiple documents into a new or existing KB"""
+    kb_name = request.form.get('kb_name', 'General')
+    uploaded_files = request.files.getlist('file')
+    custom_names = request.form.getlist('custom_names')
+    
+    # Fix for custom_names length mismatch
+    if not custom_names or len(custom_names) < len(uploaded_files):
+        custom_names = [f.filename for f in uploaded_files]
+
+    kb_config = load_kb_config()
+    is_new_kb = kb_name not in kb_config
+    
+    if is_new_kb:
+        safe_name = "".join(x for x in kb_name if x.isalnum() or x in "._-").strip()
+        target_kb = {
+            "jsonfile": f"{safe_name.lower()}_meta.json",
+            "binfile": f"{safe_name.lower()}_index.bin"
+        }
+    else:
+        target_kb = kb_config[kb_name]
+        
+    result = process_and_add_files(kb_name, uploaded_files, custom_names, target_kb, is_new_kb=is_new_kb)
+    return jsonify(result), (200 if result["status"] == "success" else 500)
+
+@app.route('/knowledge-bases/<kb_name>/append', methods=['POST'])
+def append_to_kb(kb_name):
+    """Add more files to an existing Knowledge Base"""
+    try:
+        uploaded_files = request.files.getlist('file')
+        custom_names = request.form.getlist('custom_names')
+        
+        if not custom_names or len(custom_names) < len(uploaded_files):
+            custom_names = [f.filename for f in uploaded_files]
+
+        kb_config = load_kb_config()
+        if kb_name not in kb_config:
+            return jsonify({"status": "error", "message": f"KB '{kb_name}' not found"}), 404
+            
+        target_kb = kb_config[kb_name]
+        result = process_and_add_files(kb_name, uploaded_files, custom_names, target_kb, is_new_kb=False)
+        return jsonify(result), 200
+    except Exception as e:
+        logger.error(f"❌ Append error for {kb_name}: {e}")
+        return jsonify({"status": "error", "message": str(e)}), 500
 @app.route('/process', methods=['POST'])
 @app.route('/chat', methods=['POST'])
 def chat():
@@ -136,9 +200,25 @@ def chat():
 
     logger.info(f"💬 User query: {message}")
 
+    kb_name = data.get('kb_name')
+    kb_config = load_kb_config()
+    
+    # Safely get target KB or fallback to the first available one
+    target_kb = kb_config.get(kb_name)
+    if not target_kb and kb_config:
+        # Fallback to the first available KB if the requested one is missing
+        first_kb_name = next(iter(kb_config))
+        target_kb = kb_config[first_kb_name]
+        logger.info(f"⚠️ KB '{kb_name}' not found, falling back to '{first_kb_name}'")
+
     try:
-        # Process query through hybrid pipeline
-        result = ai_pipeline.process_query(message)
+        # Determine which KB name we are actually using (for tagging)
+        actual_kb_name = kb_name if (kb_name and kb_name in kb_config) else next(iter(kb_config))
+        if target_kb:
+            target_kb['kb_name'] = actual_kb_name
+
+        # Process query through hybrid pipeline with specific KB
+        result = ai_pipeline.process_query(message, kb_config=target_kb)
 
         logger.info(f"✓ Intent: {result['intent']}, Context found: {result['context_found']}")
         logger.info(f"✓ Response: {result['reply'][:100]}...")
@@ -161,32 +241,6 @@ def chat():
             "answer": f"I encountered an error processing your request: {str(e)}"
         }), 500
 
-@app.route('/reset', methods=['POST'])
-def reset_model():
-    """Reset the knowledge base vector store"""
-    global vector_store, ai_pipeline
-    try:
-        if os.path.exists("faiss_index.bin"):
-            os.remove("faiss_index.bin")
-        if os.path.exists("faiss_meta.json"):
-            os.remove("faiss_meta.json")
-        
-        vector_store = VectorStore()
-        ai_pipeline = HybridPipeline(vector_store=vector_store)
-        
-        logger.info("✅ Vector store reset successfully")
-        
-        return jsonify({
-            "status": "success",
-            "message": "Knowledge base has been cleared successfully"
-        }), 200
-        
-    except Exception as e:
-        logger.error(f"❌ Reset error: {e}")
-        return jsonify({
-            "status": "error",
-            "message": f"Error resetting knowledge base: {str(e)}"
-        }), 500
 
 @app.route('/stats', methods=['GET'])
 def get_stats():
@@ -206,18 +260,21 @@ def get_stats():
             "message": str(e)
         }), 500
 
-@app.route('/unverified', methods=['GET'])
-def get_unverified():
-    """Get all unverified memory items"""
+@app.route('/chat-history', methods=['GET'])
+def get_chat_history():
+    """Get unverified items (chat history) with filtering and pagination"""
     try:
-        items = vector_store.get_unverified()
+        kb_name = request.args.get('kb_name')
+        page = int(request.args.get('page', 1))
+        page_size = int(request.args.get('page_size', 10))
+        
+        result = vector_store.get_chat_history(kb_name=kb_name, page=page, page_size=page_size)
         return jsonify({
             "status": "success",
-            "count": len(items),
-            "items": items
+            **result
         }), 200
     except Exception as e:
-        logger.error(f"❌ Unverified fetch error: {e}")
+        logger.error(f"❌ Chat history fetch error: {e}")
         return jsonify({
             "status": "error",
             "message": str(e)
@@ -264,6 +321,60 @@ def delete_unverified():
     except Exception as e:
         logger.error(f"❌ Delete error: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/knowledge-bases', methods=['GET'])
+def get_knowledge_bases():
+    """List all available knowledge bases"""
+    return jsonify({
+        "status": "success",
+        "knowledge_bases": load_kb_config()
+    }), 200
+
+@app.route('/knowledge-bases/<name>', methods=['DELETE'])
+def delete_knowledge_base(name):
+    """Delete a knowledge base configuration and its files"""
+    try:
+        kb_config = load_kb_config()
+        if name not in kb_config:
+            return jsonify({"status": "error", "message": "Knowledge base not found"}), 404
+            
+        kb = kb_config[name]
+        json_file = kb.get('jsonfile')
+        bin_file = kb.get('binfile')
+        
+        # Delete files if they exist
+        if json_file and os.path.exists(json_file):
+            os.remove(json_file)
+        if bin_file and os.path.exists(bin_file):
+            os.remove(bin_file)
+            
+        # Remove from config
+        del kb_config[name]
+        save_kb_config(kb_config)
+        
+        logger.info(f"🗑️ Deleted KB: {name}")
+        return jsonify({"status": "success", "message": f"Knowledge base '{name}' and its files have been deleted"}), 200
+        
+    except Exception as e:
+        logger.error(f"❌ Delete KB error: {e}")
+        return jsonify({"status": "error", "message": str(e)}), 500
+    
+@app.route('/knowledge-bases', methods=['POST'])
+def add_knowledge_base():
+    """Add or update a knowledge base configuration"""
+    data = request.json
+    name = data.get('name')
+    jsonfile = data.get('jsonfile')
+    binfile = data.get('binfile')
+    
+    if not all([name, jsonfile, binfile]):
+        return jsonify({"status": "error", "message": "Missing name, jsonfile, or binfile"}), 400
+        
+    config = load_kb_config()
+    config[name] = {"jsonfile": jsonfile, "binfile": binfile}
+    save_kb_config(config)
+    
+    return jsonify({"status": "success", "message": f"Knowledge base '{name}' updated"}), 200
 
 @app.route('/health', methods=['GET'])
 def health_check():

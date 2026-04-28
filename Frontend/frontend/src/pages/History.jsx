@@ -15,18 +15,36 @@ const History = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-dark-950 p-8 flex flex-col items-center">
-      <div className="w-full max-w-4xl">
-        <button 
-          onClick={() => navigate('/')}
-          className="mb-8 px-6 py-2 rounded-xl bg-dark-800 text-slate-300 hover:text-white border border-slate-700 transition-all"
-        >
-          ← Back to Chat
-        </button>
+    <div className="min-h-screen bg-dark-950 p-6 flex flex-col items-center overflow-hidden relative">
+      {/* Background Blobs */}
+      <div className="absolute top-0 -left-4 w-72 h-72 bg-primary-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob"></div>
+      <div className="absolute top-0 -right-4 w-72 h-72 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob animation-delay-2000"></div>
 
-        <header className="mb-12">
-          <h1 className={`text-5xl mb-2 ${GRADIENT_TEXT}`}>Interaction History</h1>
-          <p className="text-slate-400">Review your past conversations and support tickets</p>
+      <div className="w-full max-w-5xl relative z-10">
+        <header className="w-full flex flex-col items-center mb-16">
+          {/* System Status Pill */}
+          <div className="mb-6 flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary-500/10 border border-primary-500/20 backdrop-blur-md">
+            <div className="w-2 h-2 rounded-full bg-primary-500 shadow-[0_0_8px_rgba(var(--primary-rgb),0.8)]"></div>
+            <span className="text-[10px] font-bold text-primary-400 uppercase tracking-[0.2em]">Archive Sync Secure</span>
+          </div>
+
+          <div className="w-full flex flex-col md:flex-row justify-between items-center gap-8">
+            <div className="text-center md:text-left">
+              <h1 className={`text-5xl md:text-6xl mb-3 tracking-tight ${GRADIENT_TEXT}`}>
+                Interaction History
+              </h1>
+              <p className="text-slate-400 font-medium">Review your past conversations and support tickets</p>
+            </div>
+            
+            <button 
+              onClick={() => navigate('/')}
+              className="group relative px-8 py-3.5 rounded-2xl bg-dark-900 text-slate-300 border border-slate-700/50 transition-all hover:border-primary-500/50 hover:text-white shadow-xl flex items-center gap-3 overflow-hidden"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-primary-600/10 to-indigo-600/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              <span className="text-lg transition-transform group-hover:-translate-x-1">←</span>
+              <span className="font-bold text-xs uppercase tracking-widest">Return to Portal</span>
+            </button>
+          </div>
         </header>
 
         <div className="space-y-4">

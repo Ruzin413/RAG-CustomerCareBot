@@ -219,19 +219,41 @@ class HybridPipeline:
         if intent not in ["faq", "support"]:
             return ""
 
-        results = self.vector_store.search(text, top_k=3, threshold=0.5)
+        results = self.vector_store.search(text, top_k=5, threshold=0.5)
+        logger.info(f"🔍 Vector search returned {len(results)} potential matches (Threshold: 0.75)")
+        
         if not results:
             return ""
 
-        context_parts = [res['text'] for res in results]
-        raw_context = "\n\n".join(context_parts)
-        clean_context = self._clean_context(raw_context)
+        # Log individual matches for debugging
+        for i, res in enumerate(results):
+            logger.info(f"  Match {i+1}: Score={res.get('similarity'):.3f}, Verified={res.get('verified')}, Source={res.get('source', {}).get('file')}")
 
-        logger.info(
-            f"✓ Retrieved {len(results)} chunk(s) "
-            f"(top similarity: {results[0]['similarity']:.2f})"
-        )
-        return clean_context
+        # Only allow verified chunks to be used as context
+        verified_results = [res for res in results if res.get('verified') is True]
+        
+        if not verified_results:
+            logger.info("⚠️ No verified matches found above threshold.")
+            return ""
+
+        logger.info(f"✅ Found {len(verified_results)} verified chunks for context.")
+        
+        # Combine texts with clear boundaries (no citations for cleaner fallback)
+        context_parts = [res['text'] for res in verified_results]
+        return "\n\n".join(context_parts)
+
+    # ======================================================================
+    def _clean_context(self, context: str) -> str:
+        """Strip citations and artifacts from context for cleaner generation."""
+        # Remove [Source: ...] citations
+        clean = re.sub(r'\[Source:[^\]]*\]', '', context)
+        # Remove --- separators
+        clean = re.sub(r'-{2,}', ' ', clean)
+        # Remove numbered list artifacts like "1." "2." at start of line
+        clean = re.sub(r'^\s*\d+\.\s*', '', clean, flags=re.MULTILINE)
+        # Collapse multiple spaces
+        clean = re.sub(r'\s+', ' ', clean)
+        return clean.strip()
 
     # ======================================================================
     # STAGE 2: Qwen2-0.5B-Instruct Grounded Generation
@@ -252,25 +274,42 @@ class HybridPipeline:
         """
         if self.qwen_model is None or self.qwen_tokenizer is None:
             logger.warning("⚠️ Qwen2 not available. Using extractive fallback.")
-            return self._extract_best_sentences(text, context, top_n=2)
+            return self._extract_best_sentences(text, self._clean_context(context), top_n=2)
 
-        # Cap context length to keep generation focused
-        context_trimmed = context[:600].strip()
+        # Clean the context (strip citations, separators, etc.)
+        context_clean = self._clean_context(context)
+        context_trimmed = context_clean[:2000].strip()
 
         # Strict system prompt — zero tolerance for hallucination
         system_prompt = (
-            "You are a precise and helpful customer care assistant. "
-            "Answer ONLY using the information provided in the context below. "
-            "If the context does not contain enough information to answer, "
-            "respond with: 'I don't have that information. Please contact our support team.' "
-            "Rules: "
-            "1. Keep your answer to 1-3 clear sentences. "
-            "2. Do NOT make up or guess any information. "
-            "3. Do NOT repeat the question. "
-            "4. Do NOT use bullet points or symbols. "
-            "5. Speak naturally and politely."
-        )
+    "You are a precise customer care assistant. "
+    "Answer ONLY using the provided context. "
+    "If the answer is not in the context, say exactly: "
+    "'I don't have that information. Please contact our support team.' "
 
+    "Response rules by question type: "
+    "WHAT: Give a clear factual definition or description. "
+    "HOW: Explain the process or steps. "
+    "WHERE: Identify the specific location or department. "
+    "IS/ARE: Start with Yes or No, then explain using the context. "
+    "DO NOT include source citations like [Source: filename.docx] in your answer. "
+    "DO NOT include separator lines like --- or ===. "
+    "DO NOT include numbered list prefixes like '1.' '2.' '3.' unless explaining steps. "
+    "Answer in plain natural sentences only."
+
+    "Hard rules: "
+    "1. Maximum 3 sentences. Stop after 3 sentences. "
+    "2. Never use any name, company, or fact not explicitly in the context. "
+    "3. DO NOT repeat the question. "
+    "4. DO NOT start with 'Based on the context' or 'As mentioned'. "
+    "5. DO NOT add greetings like Hello or Sure. "
+    "6. DO NOT generate generic customer service templates. "
+
+    "Example: "
+    "Context: Refunds take 5-7 business days via original payment method. "
+    "Question: How long do refunds take? "
+    "Answer: Refunds are processed within 5-7 business days to your original payment method."
+)
         user_message = (
             f"Context:\n{context_trimmed}\n\n"
             f"Question: {text}\n\n"
@@ -327,19 +366,19 @@ class HybridPipeline:
 
         except Exception as e:
             logger.error(f"❌ Qwen2 generation error: {e}. Using extractive fallback.")
-            return self._extract_best_sentences(text, context, top_n=2)
+            return self._extract_best_sentences(text, self._clean_context(context), top_n=2)
 
     # ======================================================================
     # STAGE 3: Fallback
     # ======================================================================
 
-    def stage3_fallback(self, text: str) -> str:
+    def stage3_fallback(self, text: str, kb_name="General") -> str:
         """
         No relevant context found — log query and return polite not-found message.
         """
-        logger.info("⚠️ No context found. Logging unverified query.")
+        logger.info(f"⚠️ No context found for KB '{kb_name}'. Logging unverified query.")
         try:
-            self.vector_store.save_unverified_query(text)
+            self.vector_store.save_unverified_query(text, kb_name=kb_name)
         except Exception as e:
             logger.error(f"Error saving unverified query: {e}")
         return random.choice(self.templates["not_found"])
@@ -348,7 +387,7 @@ class HybridPipeline:
     # MAIN PIPELINE
     # ======================================================================
 
-    def process_query(self, text: str) -> dict:
+    def process_query(self, text: str, kb_config: dict = None) -> dict:
         """
         Full 3-Stage RAG Pipeline:
           Stage 0 — Intent Classification
@@ -359,6 +398,15 @@ class HybridPipeline:
         start_time = time.time()
 
         with self.lock:
+            # Switch Knowledge Base if needed
+            if kb_config:
+                json_file = kb_config.get('jsonfile')
+                bin_file = kb_config.get('binfile')
+                if json_file and bin_file:
+                    # Check if we are already using this KB to avoid redundant loading
+                    if self.vector_store.index_path != bin_file or self.vector_store.meta_path != json_file:
+                        logger.info(f"🔄 Switching knowledge base to: {bin_file}")
+                        self.vector_store.load_kb(bin_file, json_file)
 
             # --- Stage 0: Intent ---
             t0 = time.time()
@@ -399,11 +447,20 @@ class HybridPipeline:
                 # --- Stage 2: Qwen2 grounded generation ---
                 logger.info("🧠 Stage 2: Generating grounded response with Qwen2-0.5B-Instruct...")
                 reply = self.stage2_grounded_generation(text, context)
+                
+                # Auto-log interaction as unverified for future learning
+                try:
+                    kb_name = kb_config.get('kb_name', 'General') if kb_config else 'General'
+                    self.vector_store.save_interaction(text, reply, kb_name=kb_name)
+                except Exception as e:
+                    logger.error(f"Error logging interaction: {e}")
+                
                 return self._build_response(intent, True, reply, start_time)
             else:
                 # --- Stage 3: Fallback ---
                 logger.info("🛟 Stage 3: No context found. Using fallback...")
-                reply = self.stage3_fallback(text)
+                kb_name = kb_config.get('kb_name', 'General') if kb_config else 'General'
+                reply = self.stage3_fallback(text, kb_name=kb_name)
                 return self._build_response(intent, False, reply, start_time)
 
     # ======================================================================

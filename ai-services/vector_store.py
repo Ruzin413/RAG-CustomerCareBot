@@ -12,6 +12,7 @@ class VectorStore:
     def __init__(self, index_path="faiss_index.bin", meta_path="faiss_meta.json", model_name='all-MiniLM-L6-v2'):
         self.index_path = index_path
         self.meta_path = meta_path
+        self.model_name = model_name
 
         logger.info(f"Loading embedding model: {model_name}...")
         try:
@@ -22,19 +23,34 @@ class VectorStore:
             logger.error(f"Failed to load embedding model: {e}")
             raise
 
-        # Load or initialize FAISS index
+        self.index = None
+        self.metadata = []
+        self.load_kb(self.index_path, self.meta_path)
+
+    def load_kb(self, index_path, meta_path):
+        """Switch to a different knowledge base files."""
+        self.index_path = index_path
+        self.meta_path = meta_path
+        
         if os.path.exists(self.index_path) and os.path.exists(self.meta_path):
             try:
                 self.index = faiss.read_index(self.index_path)
                 with open(self.meta_path, 'r', encoding='utf-8') as f:
                     self.metadata = json.load(f)
-                logger.info(f"✓ Loaded existing vector store with {self.index.ntotal} items")
+                
+                # Critical Sync Check: Ensure vectors match metadata
+                if self.index.ntotal != len(self.metadata):
+                    logger.warning(f"⚠️ Index ({self.index.ntotal}) and metadata ({len(self.metadata)}) out of sync. Rebuilding...")
+                    self._rebuild_index()
+                    self._save()
+                else:
+                    logger.info(f"✓ Loaded existing vector store from {self.index_path} with {self.index.ntotal} items")
             except Exception as e:
-                logger.error(f"Failed to load vector store: {e}. Creating new one.")
+                logger.error(f"Failed to load vector store from {self.index_path}: {e}. Initializing empty.")
                 self.index = faiss.IndexFlatL2(self.dimension)
                 self.metadata = []
         else:
-            logger.info("Initializing new vector store")
+            logger.info(f"Initializing new vector store (files not found: {self.index_path})")
             self.index = faiss.IndexFlatL2(self.dimension)
             self.metadata = []
 
@@ -106,6 +122,11 @@ class VectorStore:
                 continue
             sim_score = 1.0 - (dist / 4.0)
             if sim_score >= threshold:
+                # Safety guard for out-of-sync state
+                if idx >= len(self.metadata):
+                    logger.error(f"❌ Index {idx} out of range (metadata size: {len(self.metadata)})")
+                    continue
+                    
                 chunk = self.metadata[idx].copy()
                 chunk["similarity"] = float(sim_score)
                 results.append(chunk)
@@ -114,28 +135,59 @@ class VectorStore:
         results.sort(key=lambda r: r["similarity"], reverse=True)
         return results
 
-    def save_unverified_query(self, question):
-        """
-        Log an unanswered user query for admin review.
+    def save_unverified_query(self, question, kb_name="General"):
+        """Log an unanswered user query for admin review (if not a duplicate)."""
+        normalized_q = question.strip().lower()
+        
+        # Duplicate check: don't log the same question twice
+        for item in self.metadata:
+            if item.get("doc_id") == "unverified_query":
+                existing_q = item.get("original_question", "").strip().lower()
+                if existing_q == normalized_q:
+                    logger.info(f"⏭️ Skipping duplicate unverified query: {question[:30]}...")
+                    return
 
-        Key difference from old save_memory():
-        - Stores ONLY the question (no fake answer string).
-        - Marks unverified=True so stage1 can filter it out of live results.
-        - Does NOT embed a misleading "Pending Admin Review" answer that could
-          surface as a real result in future searches.
-        """
         chunk = {
             "doc_id": "unverified_query",
             "chunk_id": f"unverified_{int(time.time())}",
+            "kb_name": kb_name,
             "source": {"type": "unverified_query"},
             "text": f"Unanswered question: {question}",
             "tags": ["unverified"],
             "created_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
-            "unverified": True,
+            "verified": False,
             "original_question": question,
         }
         self.add_chunks([chunk])
-        logger.info("✓ Saved unverified query for admin review")
+        logger.info(f"✓ Saved unverified query for KB '{kb_name}'")
+
+    def save_interaction(self, question, answer, kb_name="General"):
+        """Automatically log an AI interaction (Q&A pair) as unverified (if not a duplicate)."""
+        normalized_q = question.strip().lower()
+        
+        # Duplicate check: don't log the same question if it's already in history
+        for item in self.metadata:
+            if item.get("doc_id") == "chat_interaction":
+                # Extract question from "Question: ...\nAnswer: ..."
+                text = item.get("text", "")
+                if text.lower().startswith(f"question: {normalized_q}"):
+                    logger.info(f"⏭️ Skipping duplicate chat interaction for question: {question[:30]}...")
+                    return
+
+        full_text = f"Question: {question}\nAnswer: {answer}"
+
+        chunk = {
+            "doc_id": "chat_interaction",
+            "chunk_id": f"chat_{int(time.time())}",
+            "kb_name": kb_name,
+            "source": {"type": "chat_history"},
+            "text": full_text,
+            "tags": ["chat_history"],
+            "verified": False,
+            "created_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
+        }
+        self.add_chunks([chunk])
+        logger.info(f"✓ Automatically logged AI interaction for KB '{kb_name}'")
 
     def save_memory(self, question, answer, tags=None):
         """
@@ -155,15 +207,38 @@ class VectorStore:
             "source": {"type": "conversation"},
             "text": f"Question: {question}\nAnswer: {answer}",
             "tags": tags,
+            "verified": True,
             "created_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
-            "unverified": False,
         }
         self.add_chunks([chunk])
         logger.info("✓ Saved verified memory item")
 
-    def get_unverified(self):
-        """Return all items tagged as unverified (pending admin review)."""
-        return [item for item in self.metadata if item.get("unverified") is True]
+    def get_chat_history(self, kb_name=None, page=1, page_size=10):
+        """
+        Get unverified items (chat history) with filtering and pagination.
+        """
+        # Filter for unverified items
+        items = [item for item in self.metadata if item.get("verified") is False]
+        
+        # Filter by KB if requested
+        if kb_name:
+            items = [item for item in items if item.get("kb_name") == kb_name]
+            
+        # Sort by latest first
+        items.sort(key=lambda x: x.get("created_at", ""), reverse=True)
+        
+        # Pagination
+        total = len(items)
+        start = (page - 1) * page_size
+        end = start + page_size
+        
+        return {
+            "items": items[start:end],
+            "total": total,
+            "page": page,
+            "page_size": page_size,
+            "total_pages": (total + page_size - 1) // page_size
+        }
 
     def update_chunk(self, chunk_id, new_text, tags=None):
         """
@@ -181,7 +256,7 @@ class VectorStore:
 
         logger.info(f"Updating chunk '{chunk_id}'...")
         self.metadata[target_idx]["text"] = new_text
-        self.metadata[target_idx]["unverified"] = False
+        self.metadata[target_idx]["verified"] = True
 
         if tags is not None:
             self.metadata[target_idx]["tags"] = tags
@@ -236,3 +311,7 @@ class VectorStore:
         faiss.normalize_L2(embeddings)
         self.index.add(embeddings)
         logger.info(f"✓ Index rebuilt ({self.index.ntotal} items)")
+
+    def get_existing_files(self):
+        """Returns a set of unique file names already present in the metadata."""
+        return set(m.get("source", {}).get("file", "") for m in self.metadata if "source" in m)

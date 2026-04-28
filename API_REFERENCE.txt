@@ -1,0 +1,112 @@
+RAG Chatbot API Reference
+==========================
+
+Base URL: http://localhost:8001
+
+1. Chat & Processing
+--------------------
+POST /process (or /chat)
+Description: The main entry point for the chatbot. It takes a user question, 
+identifies the intent, searches the specified Knowledge Base, and returns 
+a grounded AI response.
+- JSON Payload: { "message": String, "kb_name": String }
+- Response: { "status": "success", "answer": String, "intent": String, "source": String }
+
+2. Knowledge Base Management
+----------------------------
+POST /upload
+Description: Initializes a new Knowledge Base or batch-uploads files to an 
+existing one. It processes documents (PDF, DOCX, etc.), chunks them, 
+and creates a searchable FAISS vector index.
+- Multipart Form: 
+    - kb_name (String)
+    - file (Files)
+    - custom_names (String Array)
+- Response: { "status": "success", "total_chunks": Integer, "processed_files": List }
+
+POST /knowledge-bases/<kb_name>/append
+Description: Adds more documents to an existing Knowledge Base system. 
+This is used in the "Manage Systems" panel to expand an active model 
+without deleting previous data.
+- Multipart Form: 
+    - file (Files)
+    - custom_names (String Array)
+- Response: { "status": "success", "total_chunks": Integer, "processed_files": List }
+
+GET /knowledge-bases
+Description: Returns a registry of all active Knowledge Systems currently 
+loaded on the server, including their file paths.
+- Response: { "knowledge_bases": { "Name": { "jsonfile": String, "binfile": String } } }
+
+DELETE /knowledge-bases/<name>
+Description: Completely removes a Knowledge Base system, deleting its 
+metadata file, vector index file, and configuration entry.
+- Response: { "status": "success" }
+
+3. Learning Loop (Admin)
+------------------------
+GET /chat-history
+Description: Retrieves logs of interactions that need verification. 
+Supports filtering by KB name and pagination for performance.
+- Query Parameters: kb_name (String), page (Int), page_size (Int)
+- Response: { "items": List, "total": Int, "page": Int, "total_pages": Int }
+
+POST /unverified/update
+Description: Allows an admin to edit and "Verify" a chat log entry. 
+Once verified, the corrected text is moved from the learning loop 
+into the permanent Knowledge Base index.
+- JSON Payload: { "chunk_id": String, "text": String }
+- Response: { "status": "success" }
+
+POST /unverified/delete
+Description: Permanently discards a chat interaction from the learning 
+loop logs if it is incorrect or irrelevant.
+- JSON Payload: { "chunk_id": String }
+- Response: { "status": "success" }
+
+4. Implementation Hooks (Frontend Examples)
+-------------------------------------------
+
+// 1. Send Chat Message
+const sendChat = async (message, kbName) => {
+  const res = await fetch('http://localhost:8001/process', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message, kb_name: kbName })
+  });
+  return await res.json();
+};
+
+// 2. Append Documents to System
+const appendDocs = async (kbName, files) => {
+  const formData = new FormData();
+  files.forEach(f => formData.append('file', f));
+  const res = await fetch(`http://localhost:8001/knowledge-bases/${kbName}/append`, {
+    method: 'POST',
+    body: formData
+  });
+  return await res.json();
+};
+// 3. Fetch Paginated History
+const getHistory = async (kbName, page = 1) => {
+  const res = await fetch(`http://localhost:8001/chat-history?kb_name=${kbName}&page=${page}&page_size=10`);
+  return await res.json();
+};
+
+// 4. Verify Interaction
+const verifyEntry = async (chunkId, text) => {
+  const res = await fetch('http://localhost:8001/unverified/update', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chunk_id: chunkId, text })
+  });
+  return await res.json();
+};
+
+// 5. Delete System
+const deleteSystem = async (name) => {
+  const res = await fetch(`http://localhost:8001/knowledge-bases/${name}`, {
+    method: 'DELETE'
+  });
+  return await res.json();
+};

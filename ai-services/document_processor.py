@@ -96,86 +96,46 @@ class DocumentProcessor:
             logger.error(f"❌ Error extracting PPTX: {e}")
             raise
 
-    def extract_chunks(self, file_name, text_units, target_tokens=300, overlap_tokens=50):
+    def extract_chunks(self, file_name, text_units, target_tokens=300, overlap_tokens=50, kb_name="General"):
         """
-        Groups text units (pages or paragraphs) into RAG-friendly chunks.
-        
-        Returns a list of dictionaries with metadata:
-        {
-            "doc_id": "...",
-            "chunk_id": "...",
-            "source": {"file": "..."},
-            "text": "...",
-            "tags": [],
-            "created_at": "..."
-        }
+        Groups text units into RAG-friendly chunks using LangChain's RecursiveCharacterTextSplitter.
+        This respects natural boundaries like paragraphs and sentences.
         """
+        from langchain_text_splitters import RecursiveCharacterTextSplitter
         import time
         import uuid
-        
+
         doc_id = file_name.replace(" ", "_").lower()
+        
+        # Combine all units into one full text first to allow LangChain to find optimal splits
+        full_text = "\n\n".join(text_units)
+
+        logger.info(f"✂️  Starting LangChain chunking for {file_name} (Chunk Size: 500 chars)...")
+
+        # Initialize RecursiveCharacterTextSplitter
+        # tries paragraph → line → sentence → word
+        text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=500,
+            chunk_overlap=50,
+            separators=["\n\n", "\n", ". ", " "]
+        )
+
+        # Split the text
+        split_texts = text_splitter.split_text(full_text)
+
         chunks = []
-        current_window = []
-        current_tokens = 0
-        chunk_index = 0
-        total_units = len(text_units)
-
-        logger.info(f"✂️  Starting chunking process for {total_units} text units (Target: {target_tokens} tokens)...")
-
-        for i, unit in enumerate(text_units):
-            # Estimate tokens
-            if self.tokenizer:
-                unit_tokens = len(self.tokenizer.encode(unit))
-            else:
-                unit_tokens = len(unit) // 4  # Rough fallback
-
-            if current_tokens + unit_tokens > target_tokens and current_window:
-                # Close current window
-                text_content = "\n\n".join(current_window)
-                
-                chunks.append({
-                    "doc_id": doc_id,
-                    "chunk_id": f"{doc_id}#{chunk_index:03d}",
-                    "source": {"file": file_name},
-                    "text": text_content,
-                    "tags": [],
-                    "created_at": time.strftime("%Y-%m-%dT%H:%M:%S")
-                })
-                
-                if (chunk_index + 1) % 10 == 0:
-                    logger.info(f"  - Generated {chunk_index + 1} chunks so far...")
-                
-                chunk_index += 1
-                
-                # Start new window with overlap
-                overlap_text = ""
-                # Simple approximation: keep last overlap_tokens tokens worth of units
-                temp_tokens = 0
-                temp_window = []
-                for u in reversed(current_window):
-                    u_tok = len(self.tokenizer.encode(u)) if self.tokenizer else len(u)//4
-                    temp_window.insert(0, u)
-                    temp_tokens += u_tok
-                    if temp_tokens >= overlap_tokens:
-                        break
-                        
-                current_window = temp_window
-                current_tokens = temp_tokens
-
-            current_window.append(unit)
-            current_tokens += unit_tokens
-
-        # Add final window
-        if current_window:
-            text_content = "\n\n".join(current_window)
+        for i, text in enumerate(split_texts):
             chunks.append({
                 "doc_id": doc_id,
-                "chunk_id": f"{doc_id}#{chunk_index:03d}",
+                "chunk_id": f"{doc_id}#{i:03d}",
+                "kb_name": kb_name,
                 "source": {"file": file_name},
-                "text": text_content,
+                "text": text,
                 "tags": [],
+                "verified": True,
                 "created_at": time.strftime("%Y-%m-%dT%H:%M:%S")
             })
 
-        logger.info(f"✅ Chunking complete. Generated {len(chunks)} chunks for {file_name}")
+        logger.info(f"✅ LangChain chunking complete. Generated {len(chunks)} context-aware chunks.")
+        return chunks
         return chunks

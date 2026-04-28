@@ -13,3 +13,4 @@ sentence-transformers>=2.2.2
 numpy
 hf_transfer
 tiktoken
+langchain-text-splitters
