@@ -51,8 +51,8 @@ const History = () => {
           {historyItems.map((item, i) => (
             <div key={i} className={`${GLASS_STYLE} p-6 rounded-3xl flex items-center justify-between group hover:border-primary-500/30 transition-all cursor-pointer`}>
               <div className="flex items-center gap-6">
-                <div className="w-12 h-12 rounded-2xl bg-dark-900 flex items-center justify-center text-xl">
-                  {item.type === 'Query' ? '💬' : item.type === 'Support' ? '🛠️' : '⚠️'}
+                <div className="w-12 h-12 rounded-2xl bg-dark-900 flex items-center justify-center text-[10px] font-bold text-slate-500 uppercase tracking-tighter">
+                  {item.type.substring(0, 3)}
                 </div>
                 <div>
                   <h4 className="text-white font-bold">{item.text}</h4>

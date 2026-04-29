@@ -8,6 +8,7 @@ __pycache__/
 
 # Environment & Keys
 .env
+*.env
 *.key
 
 # Build & Dist
@@ -15,10 +16,11 @@ dist/
 build/
 .vite/
 
-# AI / Data (Keep local, do not commit raw index)
-ai-services/faiss_index.bin
-ai-services/faiss_meta.json
-ai-services/knowledge_base.jsonl
+# AI Data & Indices
+*.bin
+*.json
+!package.json
+!package-lock.json
 ai-services/temp_uploads/
 
 # OS Specific

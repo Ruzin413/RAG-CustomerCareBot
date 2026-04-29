@@ -57,6 +57,7 @@ cd ai-services
 python -m venv venv
 .\venv\Scripts\activate  # Windows
 pip install -r requirements.txt
+# Create .env file and set ADMIN_TOKEN
 python app.py
 ```
 *Note: The first run will download ~1GB of model weights.*
@@ -92,8 +93,6 @@ Detailed documentation is available in **[API_REFERENCE.md](./API_REFERENCE.md)*
 3. Commit your changes (`git commit -m 'Add some AmazingFeature'`).
 4. Push to the branch.
 5. Open a Pull Request.
-
 ---
-
 ## 📄 License
 Distributed under the MIT License. Developed by Rujin Manandhar.

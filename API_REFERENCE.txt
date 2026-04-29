@@ -20,7 +20,7 @@ Description: Processes user queries and returns a grounded AI response or naviga
     "status": "success", 
     "answer": String, 
     "intent": String, 
-    "redirect_to": String (Optional), 
+    "redirect_to": String, //it comes if the intent is navigate 
     "source": String 
   }
 - Navigation Logic: If `intent` is "navigate", the `redirect_to` field will contain the internal URL path (e.g., "/report", "/history"). The frontend should use this to trigger a redirect.
@@ -90,7 +90,7 @@ const sendChat = async (message, kbName) => {
   // Navigation Hook:
   if (data.redirect_to) {
     console.log(`Navigating to: ${data.redirect_to}`);
-    // window.location.href = data.redirect_to; // or use useNavigate() in React
+    // window.location.href = data.redirect_to; // or use useNavigate() in React(react-router-dom)
   }
 
   return data;
@@ -159,7 +159,7 @@ const verifyEntry = async (chunkId, newAnswer, kbName) => {
   return await res.json();
 };
 
-// 8. Discard History Item
+// 8. Discard ChatHistory Item
 const deleteHistoryItem = async (chunkId, kbName) => {
   const res = await fetch(`${BASE_URL}/unverified/delete`, {
     method: 'POST',
@@ -171,3 +171,40 @@ const deleteHistoryItem = async (chunkId, kbName) => {
   });
   return await res.json();
 };
+
+5. Navigation Configuration (Backend Logic)
+------------------------------------------
+The system uses a centralized map in `ai-services/navigation_utils.py` to handle redirects.
+
+NAV_MAP = {
+    "report": {
+        "keywords": ["report"],
+        "path": "/report"
+    },
+    "history": {
+        "keywords": ["history"],
+        "path": "/history"
+    },
+    "payment": {
+        "keywords": ["payment", "pay"],
+        "path": "/payment"
+    }
+}
+
+To add a new redirect:
+1. Open `ai-services/navigation_utils.py`.
+2. Add a new entry to `NAV_MAP`.
+3. The `HybridPipeline` will automatically detect the intent and return the `redirect_to` path.
+
+6. Security & Token Logic (Backend)
+----------------------------------
+The system enforces security via the `verify_token` dependency in `app.py`:
+
+ADMIN_TOKEN = "ft-customer-care-secret-2026"
+
+def verify_token(x_api_key: str = Header(None), admin_token: str = Cookie(None)):
+    # Logic: Priority to Header, fallback to Cookie
+    token = x_api_key or admin_token
+    if token != ADMIN_TOKEN:
+        raise HTTPException(status_code=401, detail="Invalid API Key")
+    return token
