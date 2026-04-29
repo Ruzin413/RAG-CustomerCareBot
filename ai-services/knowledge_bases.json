@@ -1,7 +1,7 @@
 {
-  "eHAJIRI": {
-    "jsonfile": "ehajiri_meta.json",
-    "binfile": "ehajiri_index.bin"
+  "Ehajii": {
+    "jsonfile": "ehajii_meta.json",
+    "binfile": "ehajii_index.bin"
   },
   "TourBooking": {
     "jsonfile": "tourbooking_meta.json",

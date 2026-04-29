@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 const GLASS_STYLE = "bg-dark-800/50 backdrop-blur-xl border border-slate-700/50 shadow-2xl";
 const GRADIENT_TEXT = "bg-clip-text text-transparent bg-gradient-to-r from-primary-400 to-indigo-400 font-extrabold";
+const API_KEY = "ft-customer-care-secret-2026";
 
 const SystemsRegistry = () => {
   const navigate = useNavigate();
@@ -18,7 +19,9 @@ const SystemsRegistry = () => {
   const fetchKBs = async () => {
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:8001/knowledge-bases');
+      const response = await fetch('http://localhost:8001/CustomerCare/knowledge-bases', {
+        headers: { 'X-API-Key': API_KEY }
+      });
       if (response.ok) {
         const data = await response.json();
         setKnowledgeBases(data.knowledge_bases);
@@ -42,8 +45,9 @@ const SystemsRegistry = () => {
     }
 
     try {
-      const response = await fetch(`http://localhost:8001/knowledge-bases/${encodeURIComponent(selectedKB)}/append`, {
+      const response = await fetch(`http://localhost:8001/CustomerCare/knowledge-bases/${encodeURIComponent(selectedKB)}/append`, {
         method: 'POST',
+        headers: { 'X-API-Key': API_KEY },
         body: formData
       });
       
@@ -66,7 +70,9 @@ const SystemsRegistry = () => {
   const fetchHistory = async (kbName, page = 1) => {
     setHistoryLoading(true);
     try {
-      const response = await fetch(`http://localhost:8001/chat-history?kb_name=${encodeURIComponent(kbName)}&page=${page}&page_size=10`);
+      const response = await fetch(`http://localhost:8001/CustomerCare/chat-history?kb_name=${encodeURIComponent(kbName)}&page=${page}&page_size=10`, {
+        headers: { 'X-API-Key': API_KEY }
+      });
       if (response.ok) {
         const data = await response.json();
         setHistoryData(data);
@@ -90,10 +96,13 @@ const SystemsRegistry = () => {
 
   const handleVerify = async (chunk_id, text) => {
     try {
-      const response = await fetch('http://localhost:8001/unverified/update', {
+      const response = await fetch('http://localhost:8001/CustomerCare/unverified/update', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chunk_id, text })
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-API-Key': API_KEY
+        },
+        body: JSON.stringify({ chunk_id, text, kb_name: selectedKB })
       });
       if (response.ok) {
         setEditingId(null);
@@ -108,10 +117,13 @@ const SystemsRegistry = () => {
   const handleDeleteMemory = async (chunk_id) => {
     if (!window.confirm("Delete this interaction from history?")) return;
     try {
-      const response = await fetch('http://localhost:8001/unverified/delete', {
+      const response = await fetch('http://localhost:8001/CustomerCare/unverified/delete', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chunk_id })
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-API-Key': API_KEY
+        },
+        body: JSON.stringify({ chunk_id, kb_name: selectedKB })
       });
       if (response.ok) {
         fetchHistory(selectedKB, historyData.page);
@@ -125,8 +137,9 @@ const SystemsRegistry = () => {
     if (!window.confirm(`Are you sure you want to delete '${name}'? This will permanently remove all associated metadata and index files.`)) return;
     
     try {
-      const response = await fetch(`http://localhost:8001/knowledge-bases/${name}`, {
-        method: 'DELETE'
+      const response = await fetch(`http://localhost:8001/CustomerCare/knowledge-bases/${name}`, {
+        method: 'DELETE',
+        headers: { 'X-API-Key': API_KEY }
       });
       if (response.ok) {
         setStatus({ message: `System '${name}' deleted successfully.`, type: 'success' });
@@ -177,8 +190,8 @@ const SystemsRegistry = () => {
                     className={`${GLASS_STYLE} p-8 rounded-3xl cursor-pointer hover:border-primary-500/50 transition-all group`}
                   >
                     <div className="flex justify-between items-start mb-4">
-                      <div className="w-12 h-12 rounded-2xl bg-primary-500/10 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
-                        🧠
+                      <div className="w-12 h-12 rounded-2xl bg-primary-500/10 flex items-center justify-center text-xs font-bold text-primary-400 group-hover:scale-110 transition-transform">
+                        KB
                       </div>
                       <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest bg-dark-900/50 px-2 py-1 rounded">Active Model</span>
                     </div>
@@ -321,14 +334,33 @@ const SystemsRegistry = () => {
                           </div>
                           
                           {editingId === item.chunk_id ? (
-                            <textarea
-                              value={editText}
-                              onChange={(e) => setEditText(e.target.value)}
-                              className="w-full h-40 p-4 rounded-2xl bg-dark-900/80 border border-amber-500/30 text-white text-sm focus:ring-2 focus:ring-amber-500/50 outline-none resize-none mb-4"
-                            />
+                            <div className="space-y-4 mb-4">
+                              <div>
+                                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Question (Read Only)</p>
+                                <div className="p-3 rounded-xl bg-dark-900/30 border border-slate-700/30 text-slate-400 text-sm leading-relaxed whitespace-pre-wrap italic">
+                                  {item.question || item.original_question || "No question provided"}
+                                </div>
+                              </div>
+                              <div>
+                                <p className="text-[10px] font-bold text-amber-500 uppercase tracking-widest mb-2">Refine Answer</p>
+                                <textarea
+                                  value={editText}
+                                  onChange={(e) => setEditText(e.target.value)}
+                                  className="w-full h-32 p-4 rounded-2xl bg-dark-900/80 border border-amber-500/30 text-white text-sm focus:ring-2 focus:ring-amber-500/50 outline-none resize-none"
+                                  placeholder="Correct the AI's answer here..."
+                                />
+                              </div>
+                            </div>
                           ) : (
-                            <div className="bg-dark-900/50 rounded-2xl p-4 border border-slate-700/30 mb-4 h-40 overflow-y-auto custom-scrollbar">
-                              <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">{item.text}</p>
+                            <div className="space-y-4 mb-4 h-48 overflow-y-auto custom-scrollbar">
+                              <div className="p-3 rounded-xl bg-dark-900/30 border border-slate-700/30">
+                                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Q:</p>
+                                <p className="text-slate-300 text-sm leading-relaxed italic">{item.question || item.original_question}</p>
+                              </div>
+                              <div className="p-3 rounded-xl bg-dark-900/30 border border-slate-700/30">
+                                <p className="text-[10px] font-bold text-primary-400 uppercase tracking-widest mb-1">A:</p>
+                                <p className="text-slate-300 text-sm leading-relaxed">{item.answer || "No answer logged"}</p>
+                              </div>
                             </div>
                           )}
                         </div>
@@ -341,7 +373,7 @@ const SystemsRegistry = () => {
                             </>
                           ) : (
                             <>
-                              <button onClick={() => { setEditingId(item.chunk_id); setEditText(item.text); }} className="flex-1 py-3 bg-primary-600/20 border border-primary-600/50 text-primary-400 rounded-xl text-[11px] font-bold uppercase tracking-wider hover:bg-primary-600 hover:text-white transition-all">Edit & Verify</button>
+                              <button onClick={() => { setEditingId(item.chunk_id); setEditText(item.answer || ''); }} className="flex-1 py-3 bg-primary-600/20 border border-primary-600/50 text-primary-400 rounded-xl text-[11px] font-bold uppercase tracking-wider hover:bg-primary-600 hover:text-white transition-all">Edit & Verify</button>
                               <button onClick={() => handleDeleteMemory(item.chunk_id)} className="px-4 py-3 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-[11px] font-bold uppercase tracking-wider hover:bg-red-500 hover:text-white transition-all">Discard</button>
                             </>
                           )}

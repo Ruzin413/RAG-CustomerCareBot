@@ -2,8 +2,10 @@ import os
 import json
 import logging
 import time
-from flask import Flask, request, jsonify
-from flask_cors import CORS
+from typing import List, Optional, Dict
+from fastapi import FastAPI, Request, File, UploadFile, Form, HTTPException, Depends, APIRouter
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 from dotenv import load_dotenv
 
 # Import our modular layers
@@ -14,8 +16,19 @@ from hybrid_pipeline import HybridPipeline
 # Load environment variables
 load_dotenv()
 
-app = Flask(__name__)
-CORS(app)
+app = FastAPI(title="RAG CustomerCare API", version="2.0.0")
+
+# Configure CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Create API Router (Equivalent to FastAPI APIRouter)
+router = APIRouter(prefix='/CustomerCare')
 
 # Configure Logging
 logging.basicConfig(
@@ -27,6 +40,18 @@ logger = logging.getLogger(__name__)
 
 # Constants
 KB_CONFIG_FILE = "knowledge_bases.json"
+ADMIN_TOKEN = "ft-customer-care-secret-2026"  # In production, move to .env
+
+from fastapi import Header, Cookie
+
+async def verify_token(
+    x_api_key: Optional[str] = Header(None), 
+    admin_token: Optional[str] = Cookie(None)
+):
+    """Dependency to verify static token from header or cookie."""
+    if x_api_key == ADMIN_TOKEN or admin_token == ADMIN_TOKEN:
+        return True
+    raise HTTPException(status_code=401, detail="Unauthorized: Invalid or missing API Token")
 
 def load_kb_config():
     if os.path.exists(KB_CONFIG_FILE):
@@ -35,7 +60,7 @@ def load_kb_config():
                 with open(KB_CONFIG_FILE, 'r') as f:
                     return json.load(f)
         except Exception as e:
-            logger.error(f"⚠️ Error loading KB config: {e}. Resetting to empty.")
+            logger.error(f"Error loading KB config: {e}. Resetting to empty.")
     return {}
 
 def save_kb_config(config):
@@ -47,7 +72,27 @@ doc_processor = DocumentProcessor()
 vector_store = VectorStore()
 ai_pipeline = HybridPipeline(vector_store=vector_store)
 
-def process_and_add_files(kb_name, uploaded_files, custom_names, target_kb, is_new_kb=False):
+# Pydantic Models for Request Bodies
+class ChatRequest(BaseModel):
+    message: str
+    kb_name: Optional[str] = None
+
+class UpdateUnverifiedRequest(BaseModel):
+    chunk_id: str
+    text: str
+    kb_name: Optional[str] = None
+
+class DeleteUnverifiedRequest(BaseModel):
+    chunk_id: str
+    kb_name: Optional[str] = None
+
+class AddKBRequest(BaseModel):
+    name: str
+    jsonfile: str
+    binfile: str
+
+# Helper Functions
+async def process_and_add_files(kb_name, uploaded_files: List[UploadFile], custom_names, target_kb, is_new_kb=False):
     """Helper to process files and add them to a specific KB."""
     # Ensure KB files exist
     meta_path = target_kb['jsonfile']
@@ -70,21 +115,27 @@ def process_and_add_files(kb_name, uploaded_files, custom_names, target_kb, is_n
             continue
             
         if display_name in existing_files:
-            logger.warning(f"⚠️ Skipping '{display_name}': Already exists in '{kb_name}'.")
+            logger.warning(f"Skipping '{display_name}': Already exists in '{kb_name}'.")
             failed_files.append({"file": display_name, "error": "Already exists"})
             continue
             
         file_start_time = time.time()
         try:
             # Extraction
+            # In FastAPI, we need to read the file stream
+            # We wrap it in a bytes object that mimics a file-like object
+            import io
+            content = await file.read()
+            file_stream = io.BytesIO(content)
+            
             if file.filename.endswith('.docx'):
-                units = doc_processor.extract_text_from_docx(file)
+                units = doc_processor.extract_text_from_docx(file_stream)
             elif file.filename.endswith('.pdf'):
-                units = doc_processor.extract_text_from_pdf(file)
+                units = doc_processor.extract_text_from_pdf(file_stream)
             elif file.filename.endswith(('.pptx', '.ppt')):
-                units = doc_processor.extract_text_from_ppt(file)
+                units = doc_processor.extract_text_from_ppt(file_stream)
             elif file.filename.endswith('.txt'):
-                text = file.read().decode('utf-8')
+                text = content.decode('utf-8')
                 units = [p.strip() for p in text.split('\n\n') if p.strip()]
             else:
                 failed_files.append({"file": file.filename, "error": "Unsupported format"})
@@ -109,9 +160,9 @@ def process_and_add_files(kb_name, uploaded_files, custom_names, target_kb, is_n
                 "chunks": len(chunks),
                 "duration": f"{time.time() - file_start_time:.2f}s"
             })
-            logger.info(f"✅ Finished {display_name}")
+            logger.info(f"[DONE] Finished {display_name}")
         except Exception as e:
-            logger.error(f"❌ Error processing {display_name}: {e}")
+            logger.error(f"[ERROR] Error processing {display_name}: {e}")
             failed_files.append({"file": display_name, "error": str(e)})
 
     # Persist changes
@@ -122,7 +173,7 @@ def process_and_add_files(kb_name, uploaded_files, custom_names, target_kb, is_n
             kb_config = load_kb_config()
             kb_config[kb_name] = target_kb
             save_kb_config(kb_config)
-            logger.info(f"🆕 Registered new KB: {kb_name}")
+            logger.info(f"Registered new KB: {kb_name}")
     
     total_duration = time.time() - start_time
     completion_time = time.strftime("%Y-%m-%d %H:%M:%S")
@@ -139,14 +190,18 @@ def process_and_add_files(kb_name, uploaded_files, custom_names, target_kb, is_n
         }
     }
 
-@app.route('/upload', methods=['POST'])
-def upload_document():
+# API Endpoints
+
+@router.post('/upload', dependencies=[Depends(verify_token)])
+async def upload_document(
+    kb_name: str = Form('General'),
+    file: List[UploadFile] = File(...),
+    custom_names: Optional[List[str]] = Form(None)
+):
     """Upload and process multiple documents into a new or existing KB"""
-    kb_name = request.form.get('kb_name', 'General')
-    uploaded_files = request.files.getlist('file')
-    custom_names = request.form.getlist('custom_names')
+    uploaded_files = file
     
-    # Fix for custom_names length mismatch
+    # Fix for custom_names length mismatch or missing
     if not custom_names or len(custom_names) < len(uploaded_files):
         custom_names = [f.filename for f in uploaded_files]
 
@@ -161,46 +216,49 @@ def upload_document():
         }
     else:
         target_kb = kb_config[kb_name]
-        
-    result = process_and_add_files(kb_name, uploaded_files, custom_names, target_kb, is_new_kb=is_new_kb)
-    return jsonify(result), (200 if result["status"] == "success" else 500)
+    result = await process_and_add_files(kb_name, uploaded_files, custom_names, target_kb, is_new_kb=is_new_kb)
+    if result["status"] == "error" and not result["processed_files"]:
+        raise HTTPException(status_code=500, detail=result)
+    return result
 
-@app.route('/knowledge-bases/<kb_name>/append', methods=['POST'])
-def append_to_kb(kb_name):
+@router.post('/knowledge-bases/{kb_name}/append', dependencies=[Depends(verify_token)])
+async def append_to_kb(
+    kb_name: str,
+    file: List[UploadFile] = File(...),
+    custom_names: Optional[List[str]] = Form(None)
+):
     """Add more files to an existing Knowledge Base"""
     try:
-        uploaded_files = request.files.getlist('file')
-        custom_names = request.form.getlist('custom_names')
+        uploaded_files = file
         
         if not custom_names or len(custom_names) < len(uploaded_files):
             custom_names = [f.filename for f in uploaded_files]
 
         kb_config = load_kb_config()
         if kb_name not in kb_config:
-            return jsonify({"status": "error", "message": f"KB '{kb_name}' not found"}), 404
+            raise HTTPException(status_code=404, detail=f"KB '{kb_name}' not found")
             
         target_kb = kb_config[kb_name]
-        result = process_and_add_files(kb_name, uploaded_files, custom_names, target_kb, is_new_kb=False)
-        return jsonify(result), 200
+        result = await process_and_add_files(kb_name, uploaded_files, custom_names, target_kb, is_new_kb=False)
+        return result
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"❌ Append error for {kb_name}: {e}")
-        return jsonify({"status": "error", "message": str(e)}), 500
-@app.route('/process', methods=['POST'])
-@app.route('/chat', methods=['POST'])
-def chat():
+        logger.error(f"Append error for {kb_name}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post('/process', dependencies=[Depends(verify_token)])
+@router.post('/chat')
+async def chat(request_data: ChatRequest):
     """Chat endpoint - processes user queries using 3-stage hybrid pipeline"""
-    data = request.json
-    message = data.get('message', '').strip()
+    message = request_data.message.strip()
     
     if not message:
-        return jsonify({
-            "status": "error",
-            "answer": "Message cannot be empty"
-        }), 400
+        raise HTTPException(status_code=400, detail="Message cannot be empty")
 
-    logger.info(f"💬 User query: {message}")
+    logger.info(f"User query: {message}")
 
-    kb_name = data.get('kb_name')
+    kb_name = request_data.kb_name
     kb_config = load_kb_config()
     
     # Safely get target KB or fallback to the first available one
@@ -209,21 +267,26 @@ def chat():
         # Fallback to the first available KB if the requested one is missing
         first_kb_name = next(iter(kb_config))
         target_kb = kb_config[first_kb_name]
-        logger.info(f"⚠️ KB '{kb_name}' not found, falling back to '{first_kb_name}'")
+        logger.info(f"KB '{kb_name}' not found, falling back to '{first_kb_name}'")
 
     try:
         # Determine which KB name we are actually using (for tagging)
-        actual_kb_name = kb_name if (kb_name and kb_name in kb_config) else next(iter(kb_config))
+        actual_kb_name = kb_name if (kb_name and kb_name in kb_config) else (next(iter(kb_config)) if kb_config else "General")
         if target_kb:
-            target_kb['kb_name'] = actual_kb_name
+            target_kb_copy = target_kb.copy()
+            target_kb_copy['kb_name'] = actual_kb_name
+        else:
+            target_kb_copy = None
 
         # Process query through hybrid pipeline with specific KB
-        result = ai_pipeline.process_query(message, kb_config=target_kb)
+        # ai_pipeline.process_query is synchronous, but we run it in the main thread 
+        # as it's blocking. For production, you'd use run_in_threadpool if it takes long.
+        result = ai_pipeline.process_query(message, kb_config=target_kb_copy)
 
-        logger.info(f"✓ Intent: {result['intent']}, Context found: {result['context_found']}")
-        logger.info(f"✓ Response: {result['reply'][:100]}...")
+        logger.info(f"Intent: {result['intent']}, Context found: {result['context_found']}")
+        logger.info(f"Response: {result['reply'][:100]}...")
 
-        return jsonify({
+        return {
             "status": "success",
             "intent": result["intent"],
             "answer": result["reply"],
@@ -233,110 +296,111 @@ def chat():
                 "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
                 "timing_breakdown": result["timing"]
             }
-        }), 200
+        }
     except Exception as e:
-        logger.error(f"❌ Chat error: {e}", exc_info=True)
-        return jsonify({
-            "status": "error",
-            "answer": f"I encountered an error processing your request: {str(e)}"
-        }), 500
+        logger.error(f"Chat error: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"I encountered an error processing your request: {str(e)}")
 
-
-@app.route('/stats', methods=['GET'])
-def get_stats():
+@router.get('/stats')
+async def get_stats():
     """Get statistics about the knowledge base vector store"""
     try:
         count = vector_store.index.ntotal if vector_store.index else 0
-        return jsonify({
+        return {
             "status": "success",
             "total_chunks": count,
             "message": "Vector store stats retrieved"
-        }), 200
-        
+        }
     except Exception as e:
-        logger.error(f"❌ Stats error: {e}")
-        return jsonify({
-            "status": "error",
-            "message": str(e)
-        }), 500
+        logger.error(f"Stats error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
-@app.route('/chat-history', methods=['GET'])
-def get_chat_history():
+@router.get('/chat-history', dependencies=[Depends(verify_token)])
+async def get_chat_history(kb_name: Optional[str] = None, page: int = 1, page_size: int = 10):
     """Get unverified items (chat history) with filtering and pagination"""
     try:
-        kb_name = request.args.get('kb_name')
-        page = int(request.args.get('page', 1))
-        page_size = int(request.args.get('page_size', 10))
-        
         result = vector_store.get_chat_history(kb_name=kb_name, page=page, page_size=page_size)
-        return jsonify({
+        return {
             "status": "success",
             **result
-        }), 200
+        }
     except Exception as e:
-        logger.error(f"❌ Chat history fetch error: {e}")
-        return jsonify({
-            "status": "error",
-            "message": str(e)
-        }), 500
+        logger.error(f"Chat history fetch error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
-@app.route('/unverified/update', methods=['POST'])
-def update_unverified():
+@router.post('/unverified/update', dependencies=[Depends(verify_token)])
+async def update_unverified(data: UpdateUnverifiedRequest):
     """Update and verify a memory item"""
     try:
-        data = request.json
-        chunk_id = data.get('chunk_id')
-        new_text = data.get('text')
+        chunk_id = data.chunk_id
+        new_text = data.text
+        kb_name = data.kb_name
         
-        if not chunk_id or not new_text:
-            return jsonify({"status": "error", "message": "Missing chunk_id or text"}), 400
-            
+        # Ensure correct KB is loaded
+        if kb_name:
+            kb_config = load_kb_config()
+            if kb_name in kb_config:
+                target = kb_config[kb_name]
+                if vector_store.index_path != target['binfile']:
+                    logger.info(f"Switching KB to '{kb_name}' for update")
+                    vector_store.load_kb(target['binfile'], target['jsonfile'])
+        
         success = vector_store.update_chunk(chunk_id, new_text)
         if success:
-            return jsonify({
+            return {
                 "status": "success", 
                 "message": "Item verified and moved to permanent knowledge base"
-            }), 200
+            }
         else:
-            return jsonify({"status": "error", "message": "Item not found"}), 404
+            raise HTTPException(status_code=404, detail="Item not found")
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"❌ Update error: {e}")
-        return jsonify({"status": "error", "message": str(e)}), 500
+        logger.error(f"Update error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
-@app.route('/unverified/delete', methods=['POST'])
-def delete_unverified():
+@router.post('/unverified/delete', dependencies=[Depends(verify_token)])
+async def delete_unverified(data: DeleteUnverifiedRequest):
     """Delete an unverified memory item"""
     try:
-        data = request.json
-        chunk_id = data.get('chunk_id')
+        chunk_id = data.chunk_id
+        kb_name = data.kb_name
         
-        if not chunk_id:
-            return jsonify({"status": "error", "message": "Missing chunk_id"}), 400
-            
+        # Ensure correct KB is loaded
+        if kb_name:
+            kb_config = load_kb_config()
+            if kb_name in kb_config:
+                target = kb_config[kb_name]
+                if vector_store.index_path != target['binfile']:
+                    logger.info(f"Switching KB to '{kb_name}' for deletion")
+                    vector_store.load_kb(target['binfile'], target['jsonfile'])
+        
         success = vector_store.delete_chunk(chunk_id)
         if success:
-            return jsonify({"status": "success", "message": "Item deleted successfully"}), 200
+            return {"status": "success", "message": "Item deleted successfully"}
         else:
-            return jsonify({"status": "error", "message": "Item not found"}), 404
+            raise HTTPException(status_code=404, detail="Item not found")
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"❌ Delete error: {e}")
-        return jsonify({"status": "error", "message": str(e)}), 500
+        logger.error(f"Delete error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
-@app.route('/knowledge-bases', methods=['GET'])
-def get_knowledge_bases():
+@router.get('/knowledge-bases', dependencies=[Depends(verify_token)])
+async def get_knowledge_bases():
     """List all available knowledge bases"""
-    return jsonify({
+    return {
         "status": "success",
         "knowledge_bases": load_kb_config()
-    }), 200
+    }
 
-@app.route('/knowledge-bases/<name>', methods=['DELETE'])
-def delete_knowledge_base(name):
+@router.delete('/knowledge-bases/{name}', dependencies=[Depends(verify_token)])
+async def delete_knowledge_base(name: str):
     """Delete a knowledge base configuration and its files"""
     try:
         kb_config = load_kb_config()
         if name not in kb_config:
-            return jsonify({"status": "error", "message": "Knowledge base not found"}), 404
+            raise HTTPException(status_code=404, detail="Knowledge base not found")
             
         kb = kb_config[name]
         json_file = kb.get('jsonfile')
@@ -352,41 +416,54 @@ def delete_knowledge_base(name):
         del kb_config[name]
         save_kb_config(kb_config)
         
-        logger.info(f"🗑️ Deleted KB: {name}")
-        return jsonify({"status": "success", "message": f"Knowledge base '{name}' and its files have been deleted"}), 200
+        logger.info(f"Deleted KB: {name}")
+        return {"status": "success", "message": f"Knowledge base '{name}' and its files have been deleted"}
         
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"❌ Delete KB error: {e}")
-        return jsonify({"status": "error", "message": str(e)}), 500
-    
-@app.route('/knowledge-bases', methods=['POST'])
-def add_knowledge_base():
+        logger.error(f"Delete KB error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post('/knowledge-bases', dependencies=[Depends(verify_token)])
+async def add_knowledge_base(data: AddKBRequest):
     """Add or update a knowledge base configuration"""
-    data = request.json
-    name = data.get('name')
-    jsonfile = data.get('jsonfile')
-    binfile = data.get('binfile')
+    name = data.name
+    jsonfile = data.jsonfile
+    binfile = data.binfile
     
-    if not all([name, jsonfile, binfile]):
-        return jsonify({"status": "error", "message": "Missing name, jsonfile, or binfile"}), 400
-        
     config = load_kb_config()
     config[name] = {"jsonfile": jsonfile, "binfile": binfile}
     save_kb_config(config)
     
-    return jsonify({"status": "success", "message": f"Knowledge base '{name}' updated"}), 200
+    return {"status": "success", "message": f"Knowledge base '{name}' updated"}
 
-@app.route('/health', methods=['GET'])
-def health_check():
+@router.post('/clear-cache')
+async def clear_model_cache():
+    """Manually clear models from memory and empty GPU cache"""
+    success = ai_pipeline.cleanup()
+    if success:
+        return {
+            "status": "success", 
+            "message": "Model memory cleared and GPU cache emptied. Note: Models will re-load on the next query."
+        }
+    else:
+        raise HTTPException(status_code=500, detail="Failed to clear memory cache")
+
+@router.get('/health')
+async def health_check():
     """Health check endpoint"""
-    return jsonify({
+    return {
         "status": "healthy",
         "service": "Chatbot API",
         "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
-    }), 200
+    }
+
+# Register Router
+app.include_router(router)
 
 if __name__ == '__main__':
-    logger.info("🚀 Starting 3-Stage RAG Chatbot API Server...")
+    import uvicorn
+    logger.info("Starting 3-Stage RAG CustomerCare API Server (FastAPI)...")
     logger.info("="*60)
-    
-    app.run(host='0.0.0.0', port=8001, debug=False, threaded=True)
+    uvicorn.run(app, host='0.0.0.0', port=8001)

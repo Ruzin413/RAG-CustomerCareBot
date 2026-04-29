@@ -18,14 +18,80 @@ class VectorStore:
         try:
             self.model = SentenceTransformer(model_name)
             self.dimension = self.model.get_sentence_embedding_dimension()
-            logger.info(f"✓ Model loaded (dimension: {self.dimension})")
+            logger.info(f"Model loaded (dimension: {self.dimension})")
         except Exception as e:
             logger.error(f"Failed to load embedding model: {e}")
             raise
 
         self.index = None
         self.metadata = []
+        
+        # Centralized Chat History
+        self.chat_history_path = "chat_history.json"
+        self.history_index_path = "chat_history_index.bin"
+        self.chat_history = []
+        self.history_index = None
+        self.chat_history_verified_meta = [] # Subset of chat_history that is verified
+        
+        self._load_chat_history()
         self.load_kb(self.index_path, self.meta_path)
+
+    def _load_chat_history(self):
+        """Load centralized chat history and its vector index from disk."""
+        if os.path.exists(self.chat_history_path):
+            try:
+                with open(self.chat_history_path, 'r', encoding='utf-8') as f:
+                    self.chat_history = json.load(f)
+                logger.info(f"Loaded {len(self.chat_history)} chat history items")
+            except Exception as e:
+                logger.error(f"Failed to load chat history: {e}")
+                self.chat_history = []
+        
+        # Build/Load History Index (only for verified items)
+        if os.path.exists(self.history_index_path):
+            try:
+                self.history_index = faiss.read_index(self.history_index_path)
+                self.chat_history_verified_meta = [item for item in self.chat_history if item.get("verified") is True]
+                
+                if self.history_index.ntotal != len(self.chat_history_verified_meta):
+                    logger.warning("History index out of sync. Rebuilding...")
+                    self._rebuild_history_index()
+                else:
+                    logger.info(f"Loaded history vector index with {self.history_index.ntotal} verified items")
+            except Exception as e:
+                logger.error(f"Failed to load history index: {e}")
+                self._rebuild_history_index()
+        else:
+            self._rebuild_history_index()
+
+    def _rebuild_history_index(self):
+        """Build a FAISS index for all verified items in chat history."""
+        self.chat_history_verified_meta = [item for item in self.chat_history if item.get("verified") is True]
+        self.history_index = faiss.IndexFlatL2(self.dimension)
+        
+        if not self.chat_history_verified_meta:
+            return
+
+        texts = [m.get("text") or f"Question: {m.get('question','')}\nAnswer: {m.get('answer','')}" 
+                 for m in self.chat_history_verified_meta]
+        logger.info(f"Indexing {len(texts)} verified history items...")
+        
+        embeddings = self.model.encode(texts, convert_to_numpy=True).astype('float32')
+        faiss.normalize_L2(embeddings)
+        self.history_index.add(embeddings)
+        faiss.write_index(self.history_index, self.history_index_path)
+
+    def _save_chat_history(self):
+        """Persist centralized chat history and its index to disk."""
+        try:
+            with open(self.chat_history_path, 'w', encoding='utf-8') as f:
+                json.dump(self.chat_history, f, ensure_ascii=False, indent=2)
+            
+            # Update and save the index if it exists
+            if self.history_index:
+                faiss.write_index(self.history_index, self.history_index_path)
+        except Exception as e:
+            logger.error(f"Failed to save chat history: {e}")
 
     def load_kb(self, index_path, meta_path):
         """Switch to a different knowledge base files."""
@@ -40,11 +106,11 @@ class VectorStore:
                 
                 # Critical Sync Check: Ensure vectors match metadata
                 if self.index.ntotal != len(self.metadata):
-                    logger.warning(f"⚠️ Index ({self.index.ntotal}) and metadata ({len(self.metadata)}) out of sync. Rebuilding...")
+                    logger.warning(f"Index ({self.index.ntotal}) and metadata ({len(self.metadata)}) out of sync. Rebuilding...")
                     self._rebuild_index()
                     self._save()
                 else:
-                    logger.info(f"✓ Loaded existing vector store from {self.index_path} with {self.index.ntotal} items")
+                    logger.info(f"Loaded existing vector store from {self.index_path} with {self.index.ntotal} items")
             except Exception as e:
                 logger.error(f"Failed to load vector store from {self.index_path}: {e}. Initializing empty.")
                 self.index = faiss.IndexFlatL2(self.dimension)
@@ -95,56 +161,78 @@ class VectorStore:
         self.metadata.extend(chunks)
 
         self._save()
-        logger.info(f"✓ Added {len(chunks)} chunks (Total: {self.index.ntotal})")
+        logger.info(f"Added {len(chunks)} chunks (Total: {self.index.ntotal})")
 
     def search(self, query, top_k=3, threshold=0.5):
         """
-        Search for the top_k most similar chunks above similarity threshold.
-
-        Embeddings are L2-normalized, so L2 distance relates to cosine similarity:
-          cosine_sim ≈ 1 - (L2_dist² / 2)
-        We use: sim_score = 1.0 - (dist / 4.0)  (dist in [0,4] for normalized vecs)
-
-        Threshold=0.5 means we require at least ~50% cosine similarity.
-        Unverified items are returned with their flag intact so callers can filter.
+        Search for similarity in both the current KB and verified chat history.
         """
-        if self.index.ntotal == 0:
-            return []
-
         query_embedding = self.model.encode([query], convert_to_numpy=True).astype('float32')
         faiss.normalize_L2(query_embedding)
 
-        distances, indices = self.index.search(query_embedding, min(top_k, self.index.ntotal))
+        results = []
 
+        # 1. Search in current Knowledge Base
+        if self.index and self.index.ntotal > 0:
+            results.extend(self._search_index(self.index, self.metadata, query_embedding, top_k, threshold))
+
+        # 2. Search in Verified Chat History (Global)
+        if self.history_index and self.history_index.ntotal > 0:
+            kb_name = self.active_kb_name()
+            history_hits = self._search_index(self.history_index, self.chat_history_verified_meta, query_embedding, top_k, threshold)
+            
+            # Filter and Boost history hits
+            if kb_name:
+                history_hits = [h for h in history_hits if h.get("kb_name") == kb_name]
+            
+            for h in history_hits:
+                h["similarity"] += 0.10  # Priority Boost for human-verified answers
+            
+            results.extend(history_hits)
+
+        # Sort by similarity descending and take top_k
+        # After boosting, history items will naturally rank higher
+        results.sort(key=lambda r: r["similarity"], reverse=True)
+        return results[:top_k]
+
+    def _search_index(self, index, metadata, query_embedding, top_k, threshold):
+        """Internal helper to search a specific FAISS index."""
+        distances, indices = index.search(query_embedding, min(top_k, index.ntotal))
+        
         results = []
         for dist, idx in zip(distances[0], indices[0]):
-            if idx == -1:
-                continue
+            if idx == -1: continue
             sim_score = 1.0 - (dist / 4.0)
             if sim_score >= threshold:
-                # Safety guard for out-of-sync state
-                if idx >= len(self.metadata):
-                    logger.error(f"❌ Index {idx} out of range (metadata size: {len(self.metadata)})")
-                    continue
+                if idx < len(metadata):
+                    chunk = metadata[idx].copy()
                     
-                chunk = self.metadata[idx].copy()
-                chunk["similarity"] = float(sim_score)
-                results.append(chunk)
-
-        # Sort by similarity descending
-        results.sort(key=lambda r: r["similarity"], reverse=True)
+                    # Synthesize 'text' field if missing (for chat history items)
+                    if "text" not in chunk:
+                        q = chunk.get("question", "")
+                        a = chunk.get("answer", "")
+                        chunk["text"] = f"Question: {q}\nAnswer: {a}"
+                    
+                    chunk["similarity"] = float(sim_score)
+                    results.append(chunk)
         return results
 
+    def active_kb_name(self):
+        """Helper to find the kb_name of the currently loaded KB from metadata."""
+        if self.metadata:
+            return self.metadata[0].get("kb_name")
+        return None
+
     def save_unverified_query(self, question, kb_name="General"):
-        """Log an unanswered user query for admin review (if not a duplicate)."""
+        """Log an unanswered user query for admin review in centralized chat history."""
         normalized_q = question.strip().lower()
         
-        # Duplicate check: don't log the same question twice
-        for item in self.metadata:
-            if item.get("doc_id") == "unverified_query":
+        # Duplicate check in centralized history
+        for item in self.chat_history:
+            if item.get("doc_id") == "unverified_query" and item.get("kb_name") == kb_name:
                 existing_q = item.get("original_question", "").strip().lower()
                 if existing_q == normalized_q:
-                    logger.info(f"⏭️ Skipping duplicate unverified query: {question[:30]}...")
+                    logger.info(f"Skipping duplicate unverified query in centralized history: {question[:30]}...")
                     return
 
         chunk = {
@@ -152,26 +240,28 @@ class VectorStore:
             "chunk_id": f"unverified_{int(time.time())}",
             "kb_name": kb_name,
             "source": {"type": "unverified_query"},
-            "text": f"Unanswered question: {question}",
+            "question": question,
+            "answer": "",
             "tags": ["unverified"],
             "created_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
             "verified": False,
             "original_question": question,
         }
-        self.add_chunks([chunk])
-        logger.info(f"✓ Saved unverified query for KB '{kb_name}'")
+        
+        self.chat_history.append(chunk)
+        self._save_chat_history()
+        logger.info(f"Saved unverified query to centralized history for KB '{kb_name}'")
 
     def save_interaction(self, question, answer, kb_name="General"):
-        """Automatically log an AI interaction (Q&A pair) as unverified (if not a duplicate)."""
+        """Automatically log an AI interaction in centralized chat history."""
         normalized_q = question.strip().lower()
         
-        # Duplicate check: don't log the same question if it's already in history
-        for item in self.metadata:
-            if item.get("doc_id") == "chat_interaction":
-                # Extract question from "Question: ...\nAnswer: ..."
+        # Duplicate check in centralized history
+        for item in self.chat_history:
+            if item.get("doc_id") == "chat_interaction" and item.get("kb_name") == kb_name:
                 text = item.get("text", "")
                 if text.lower().startswith(f"question: {normalized_q}"):
-                    logger.info(f"⏭️ Skipping duplicate chat interaction for question: {question[:30]}...")
+                    logger.info(f"Skipping duplicate chat interaction in centralized history: {question[:30]}...")
                     return
 
         full_text = f"Question: {question}\nAnswer: {answer}"
@@ -181,13 +271,16 @@ class VectorStore:
             "chunk_id": f"chat_{int(time.time())}",
             "kb_name": kb_name,
             "source": {"type": "chat_history"},
-            "text": full_text,
+            "question": question,
+            "answer": answer,
             "tags": ["chat_history"],
             "verified": False,
             "created_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
         }
-        self.add_chunks([chunk])
-        logger.info(f"✓ Automatically logged AI interaction for KB '{kb_name}'")
+        
+        self.chat_history.append(chunk)
+        self._save_chat_history()
+        logger.info(f"Automatically logged AI interaction to centralized history for KB '{kb_name}'")
 
     def save_memory(self, question, answer, tags=None):
         """
@@ -211,14 +304,13 @@ class VectorStore:
             "created_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
         }
         self.add_chunks([chunk])
-        logger.info("✓ Saved verified memory item")
+        logger.info("Saved verified memory item")
 
     def get_chat_history(self, kb_name=None, page=1, page_size=10):
         """
-        Get unverified items (chat history) with filtering and pagination.
+        Get chat history items from centralized store with filtering and pagination.
         """
-        # Filter for unverified items
-        items = [item for item in self.metadata if item.get("verified") is False]
+        items = self.chat_history
         
         # Filter by KB if requested
         if kb_name:
@@ -242,51 +334,97 @@ class VectorStore:
 
     def update_chunk(self, chunk_id, new_text, tags=None):
         """
-        Update a chunk's text and mark it as verified, then rebuild the index.
-        Returns True on success, False if chunk_id not found.
+        Update a chunk's text and mark it as verified.
+        Keeps verified history items in chat_history.json but updates their status.
         """
+        # 1. Search in chat history
+        history_idx = next(
+            (i for i, item in enumerate(self.chat_history) if item.get("chunk_id") == chunk_id),
+            -1
+        )
+
+        if history_idx != -1:
+            logger.info(f"Verifying item '{chunk_id}' in chat history...")
+            item = self.chat_history[history_idx]
+            
+            # Update data keys
+            item["answer"] = new_text
+            item["verified"] = True
+            
+            # Remove 'text' key if it exists (cleaning up old entries)
+            if "text" in item:
+                del item["text"]
+            
+            if tags is not None:
+                self.chat_history[history_idx]["tags"] = tags
+            else:
+                current_tags = self.chat_history[history_idx].get("tags", [])
+                current_tags = [t for t in current_tags if t not in ["unverified", "chat_history"]]
+                if "verified" not in current_tags:
+                    current_tags.append("verified")
+                self.chat_history[history_idx]["tags"] = current_tags
+
+            # Rebuild history index to include this newly verified item
+            self._rebuild_history_index()
+            self._save_chat_history()
+            return True
+
+        # 2. Search in current KB metadata (for items already in KB)
         target_idx = next(
             (i for i, item in enumerate(self.metadata) if item.get("chunk_id") == chunk_id),
             -1
         )
+        # ... (rest of the KB update logic remains the same)
 
-        if target_idx == -1:
-            logger.error(f"Chunk ID '{chunk_id}' not found for update")
-            return False
+        if target_idx != -1:
+            logger.info(f"Updating verified chunk '{chunk_id}'...")
+            self.metadata[target_idx]["text"] = new_text
+            self.metadata[target_idx]["verified"] = True
 
-        logger.info(f"Updating chunk '{chunk_id}'...")
-        self.metadata[target_idx]["text"] = new_text
-        self.metadata[target_idx]["verified"] = True
+            if tags is not None:
+                self.metadata[target_idx]["tags"] = tags
+            else:
+                current_tags = self.metadata[target_idx].get("tags", [])
+                current_tags = [t for t in current_tags if t != "unverified"]
+                if "verified" not in current_tags:
+                    current_tags.append("verified")
+                self.metadata[target_idx]["tags"] = current_tags
 
-        if tags is not None:
-            self.metadata[target_idx]["tags"] = tags
-        else:
-            current_tags = self.metadata[target_idx].get("tags", [])
-            current_tags = [t for t in current_tags if t != "unverified"]
-            if "verified" not in current_tags:
-                current_tags.append("verified")
-            self.metadata[target_idx]["tags"] = current_tags
+            self._rebuild_index()
+            self._save()
+            logger.info(f"Chunk '{chunk_id}' updated and verified")
+            return True
 
-        self._rebuild_index()
-        self._save()
-        logger.info(f"✓ Chunk '{chunk_id}' updated and verified")
-        return True
+        logger.error(f"Chunk ID '{chunk_id}' not found in history or current KB")
+        return False
 
     def delete_chunk(self, chunk_id):
         """
-        Delete a chunk by ID. Returns True on success, False if not found.
+        Delete a chunk by ID from history or metadata.
+        Returns True on success, False if not found.
         """
-        original_len = len(self.metadata)
+        # 1. Try deleting from chat history
+        original_history_len = len(self.chat_history)
+        self.chat_history = [item for item in self.chat_history if item.get("chunk_id") != chunk_id]
+        
+        if len(self.chat_history) < original_history_len:
+            self._rebuild_history_index()
+            self._save_chat_history()
+            logger.info(f"Chunk '{chunk_id}' deleted from history")
+            return True
+
+        # 2. Try deleting from KB metadata
+        original_meta_len = len(self.metadata)
         self.metadata = [item for item in self.metadata if item.get("chunk_id") != chunk_id]
 
-        if len(self.metadata) == original_len:
-            logger.warning(f"Chunk ID '{chunk_id}' not found for deletion")
-            return False
+        if len(self.metadata) < original_meta_len:
+            self._rebuild_index()
+            self._save()
+            logger.info(f"Chunk '{chunk_id}' deleted from KB metadata")
+            return True
 
-        self._rebuild_index()
-        self._save()
-        logger.info(f"✓ Chunk '{chunk_id}' deleted")
-        return True
+        logger.warning(f"Chunk ID '{chunk_id}' not found for deletion")
+        return False
 
     def _rebuild_index(self):
         """
@@ -310,7 +448,7 @@ class VectorStore:
         embeddings = np.vstack(all_embeddings).astype('float32')
         faiss.normalize_L2(embeddings)
         self.index.add(embeddings)
-        logger.info(f"✓ Index rebuilt ({self.index.ntotal} items)")
+        logger.info(f"Index rebuilt ({self.index.ntotal} items)")
 
     def get_existing_files(self):
         """Returns a set of unique file names already present in the metadata."""

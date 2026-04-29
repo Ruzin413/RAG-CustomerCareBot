@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 
 const GLASS_STYLE = "bg-dark-900/60 backdrop-blur-2xl border border-slate-700/50 shadow-2xl";
 const GRADIENT_TEXT = "bg-clip-text text-transparent bg-gradient-to-r from-primary-400 to-indigo-400 font-extrabold";
+const API_KEY = "ft-customer-care-secret-2026";
 
 function ChatBot() {
   const navigate = useNavigate()
@@ -18,7 +19,9 @@ function ChatBot() {
   useEffect(() => {
     const fetchKBs = async () => {
       try {
-        const response = await fetch('http://localhost:8001/knowledge-bases')
+        const response = await fetch('http://localhost:8001/CustomerCare/knowledge-bases', {
+          headers: { 'X-API-Key': API_KEY }
+        })
         if (response.ok) {
           const data = await response.json()
           setKnowledgeBases(data.knowledge_bases)
@@ -51,9 +54,12 @@ function ChatBot() {
     setInput('')
     setIsLoading(true)
     try {
-      const response = await fetch('http://localhost:8001/process', {
+      const response = await fetch('http://localhost:8001/CustomerCare/process', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-API-Key': API_KEY
+        },
         body: JSON.stringify({ 
           message: input,
           kb_name: selectedKB 
@@ -62,7 +68,7 @@ function ChatBot() {
       if (!response.ok) throw new Error('Failed to connect to backend')
 
       const data = await response.json()
-      console.log('📥 Chat response:', data)
+      console.log('Chat response:', data)
       const botMessage = {
         id: Date.now() + 1,
         text: data.answer || "I'm sorry, I couldn't process that request.",
@@ -127,8 +133,8 @@ function ChatBot() {
       {/* Chat Header */}
       <div className="p-6 border-b border-slate-700/50 flex items-center justify-between bg-dark-800/30">
         <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-indigo-600 flex items-center justify-center text-xl">
-            🤖
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-indigo-600 flex items-center justify-center text-xs font-bold text-white">
+            AI
           </div>
           <div>
             <h3 className="font-bold text-white tracking-tight">AI Assistant</h3>

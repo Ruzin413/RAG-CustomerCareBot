@@ -17,15 +17,15 @@ class DocumentProcessor:
         # Load tokenizer for token estimation
         try:
             self.tokenizer = AutoTokenizer.from_pretrained("gpt2")
-            logger.info("✓ GPT-2 tokenizer loaded for token estimation")
+            logger.info("GPT-2 tokenizer loaded for token estimation")
         except Exception as e:
             self.tokenizer = None
-            logger.warning(f"⚠️ Could not load tokenizer: {e}. Using character-based estimation")
+            logger.warning(f"Could not load tokenizer: {e}. Using character-based estimation")
 
     def extract_text_from_docx(self, file_stream):
         """Extract all text from DOCX file"""
         try:
-            logger.info(f"📂 Reading DOCX file...")
+            logger.info(f"Reading DOCX file...")
             doc = Document(file_stream)
             full_text = []
             
@@ -35,23 +35,23 @@ class DocumentProcessor:
                 if (i + 1) % 50 == 0:
                     logger.info(f"  - Read {i+1} paragraphs...")
             
-            logger.info(f"✓ Extracted {len(full_text)} non-empty paragraphs from DOCX")
+            logger.info(f"Extracted {len(full_text)} non-empty paragraphs from DOCX")
             return full_text
             
         except Exception as e:
-            logger.error(f"❌ Error extracting DOCX: {e}")
+            logger.error(f"Error extracting DOCX: {e}")
             raise
 
     def extract_text_from_pdf(self, file_stream):
         """Extract all text from PDF using PyMuPDF, preserving page structure"""
         try:
-            logger.info(f"📂 Reading PDF file content...")
+            logger.info(f"Reading PDF file content...")
             pdf_bytes = file_stream.read()
             doc = fitz.open(stream=pdf_bytes, filetype="pdf")
             pages_text = []
             
             total_pages = len(doc)
-            logger.info(f"📄 PDF has {total_pages} pages. Starting extraction...")
+            logger.info(f"PDF has {total_pages} pages. Starting extraction...")
             
             for page in doc:
                 text = page.get_text().strip()
@@ -62,17 +62,17 @@ class DocumentProcessor:
                     logger.info(f"  - Extracted page {page.number + 1}/{total_pages}...")
             
             doc.close()
-            logger.info(f"✓ Extracted {len(pages_text)} non-empty pages from PDF")
+            logger.info(f"Extracted {len(pages_text)} non-empty pages from PDF")
             return pages_text
             
         except Exception as e:
-            logger.error(f"❌ Error extracting PDF: {e}")
+            logger.error(f"Error extracting PDF: {e}")
             raise
 
     def extract_text_from_ppt(self, file_stream):
         """Extract all text from PowerPoint (.pptx) file"""
         try:
-            logger.info(f"📂 Reading PPTX file...")
+            logger.info(f"Reading PPTX file...")
             prs = Presentation(file_stream)
             slides_text = []
             
@@ -89,11 +89,11 @@ class DocumentProcessor:
                 if (i + 1) % 10 == 0:
                     logger.info(f"  - Read {i+1} slides...")
             
-            logger.info(f"✓ Extracted {len(slides_text)} non-empty slides from PPTX")
+            logger.info(f"Extracted {len(slides_text)} non-empty slides from PPTX")
             return slides_text
             
         except Exception as e:
-            logger.error(f"❌ Error extracting PPTX: {e}")
+            logger.error(f"Error extracting PPTX: {e}")
             raise
 
     def extract_chunks(self, file_name, text_units, target_tokens=300, overlap_tokens=50, kb_name="General"):
@@ -110,7 +110,7 @@ class DocumentProcessor:
         # Combine all units into one full text first to allow LangChain to find optimal splits
         full_text = "\n\n".join(text_units)
 
-        logger.info(f"✂️  Starting LangChain chunking for {file_name} (Chunk Size: 500 chars)...")
+        logger.info(f"Starting LangChain chunking for {file_name} (Chunk Size: 500 chars)...")
 
         # Initialize RecursiveCharacterTextSplitter
         # tries paragraph → line → sentence → word
@@ -136,6 +136,6 @@ class DocumentProcessor:
                 "created_at": time.strftime("%Y-%m-%dT%H:%M:%S")
             })
 
-        logger.info(f"✅ LangChain chunking complete. Generated {len(chunks)} context-aware chunks.")
+        logger.info(f"LangChain chunking complete. Generated {len(chunks)} context-aware chunks.")
         return chunks
         return chunks

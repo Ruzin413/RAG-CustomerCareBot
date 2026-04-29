@@ -5,6 +5,7 @@ import threading
 import time
 import random
 import re
+from navigation_utils import is_navigation_intent, get_navigation_destination, build_navigation_reply, get_redirect_path
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +20,7 @@ class HybridPipeline:
         self.vector_store = vector_store
         self.lock = threading.Lock()
 
-        logger.info(f"🚀 Initializing Hybrid Pipeline on {self.device}")
+        logger.info(f"Initializing Hybrid Pipeline on {self.device}")
 
         # ------------------------------------------------------------------
         # Layer A: Intent Classification (MobileBERT) — heuristic fallback
@@ -32,9 +33,9 @@ class HybridPipeline:
                 num_labels=5,
                 low_cpu_mem_usage=True
             ).to(self.device)
-            logger.info("✓ MobileBERT intent classifier loaded")
+            logger.info("MobileBERT intent classifier loaded")
         except Exception as e:
-            logger.warning(f"⚠️ Could not load MobileBERT: {e}. Using heuristics only.")
+            logger.warning(f"Could not load MobileBERT: {e}. Using heuristics only.")
             self.intent_model = None
             self.intent_tokenizer = None
 
@@ -43,7 +44,7 @@ class HybridPipeline:
         # ------------------------------------------------------------------
         self.qwen_model_name = "Qwen/Qwen2-0.5B-Instruct"
         try:
-            logger.info(f"⏳ Loading {self.qwen_model_name} — first run will download ~1GB...")
+            logger.info(f"Loading {self.qwen_model_name} — first run will download ~1GB...")
             self.qwen_tokenizer = AutoTokenizer.from_pretrained(
                 self.qwen_model_name,
                 trust_remote_code=True
@@ -55,9 +56,9 @@ class HybridPipeline:
                 trust_remote_code=True
             ).to(self.device)
             self.qwen_model.eval()
-            logger.info(f"✓ Qwen2-0.5B-Instruct loaded on {self.device}")
+            logger.info(f"Qwen2-0.5B-Instruct loaded on {self.device}")
         except Exception as e:
-            logger.warning(f"⚠️ Could not load Qwen2: {e}. Will use extractive fallback only.")
+            logger.warning(f"Could not load Qwen2: {e}. Will use extractive fallback only.")
             self.qwen_model = None
             self.qwen_tokenizer = None
 
@@ -96,6 +97,38 @@ class HybridPipeline:
                 "That topic isn't in my knowledge base yet. Feel free to ask about other topics or rephrase your question."
             ]
         }
+
+    # ======================================================================
+    # MEMORY MANAGEMENT
+    # ======================================================================
+
+    def cleanup(self):
+        """
+        Unload models from memory and clear GPU cache.
+        """
+        logger.info("Starting memory cleanup...")
+        with self.lock:
+            try:
+                # Delete large model objects
+                if hasattr(self, 'qwen_model'):
+                    del self.qwen_model
+                    self.qwen_model = None
+                if hasattr(self, 'intent_model'):
+                    del self.intent_model
+                    self.intent_model = None
+                
+                # Clear torch cache
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
+                    logger.info("CUDA cache cleared")
+                
+                import gc
+                gc.collect()
+                logger.info("Garbage collection complete")
+                return True
+            except Exception as e:
+                logger.error(f"Cleanup error: {e}")
+                return False
 
     # ======================================================================
     # UTILITIES
@@ -145,10 +178,13 @@ class HybridPipeline:
         # Strip surrounding quotes
         text = text.strip('"\'')
 
-        # If the model echoed the question back, remove it
-        # (Qwen sometimes starts with "Question: ..." or "Q: ...")
-        text = re.sub(r'^(Q|Question)\s*:.*?\n', '', text, flags=re.IGNORECASE).strip()
-
+        # Ensure the response ends with a full sentence
+        # (Look for the last occurrence of . ! or ?)
+        if text:
+            last_punc = max(text.rfind('.'), text.rfind('!'), text.rfind('?'))
+            if last_punc != -1:
+                text = text[:last_punc+1]
+        
         return text.strip()
 
     def _extract_best_sentences(self, query: str, context: str, top_n: int = 2) -> str:
@@ -202,8 +238,7 @@ class HybridPipeline:
         if words & support_words:
             return "support"
 
-        navigate_words = {"go", "navigate", "take", "open", "show", "redirect"}
-        if words & navigate_words or any(w in text_lower for w in ["report", "history", "payment"]):
+        if is_navigation_intent(text):
             return "navigate"
 
         return "faq"
@@ -212,15 +247,16 @@ class HybridPipeline:
     # STAGE 1: RAG Retrieval
     # ======================================================================
 
-    def stage1_rag_retrieve(self, text: str, intent: str) -> str:
+    def stage1_rag_retrieve(self, text: str, intent: str) -> tuple[str, bool]:
         """
-        Retrieve top-k chunks from vector store, clean and return context.
+        Retrieve top-k chunks from vector store.
+        Returns (context_string, from_history_boolean).
         """
         if intent not in ["faq", "support"]:
-            return ""
+            return "", False
 
-        results = self.vector_store.search(text, top_k=5, threshold=0.5)
-        logger.info(f"🔍 Vector search returned {len(results)} potential matches (Threshold: 0.75)")
+        results = self.vector_store.search(text, top_k=5, threshold=0.50)
+        logger.info(f"Vector search returned {len(results)} potential matches (Threshold: 0.75)")
         
         if not results:
             return ""
@@ -233,14 +269,16 @@ class HybridPipeline:
         verified_results = [res for res in results if res.get('verified') is True]
         
         if not verified_results:
-            logger.info("⚠️ No verified matches found above threshold.")
+            logger.info("No verified matches found above threshold.")
             return ""
 
-        logger.info(f"✅ Found {len(verified_results)} verified chunks for context.")
-        
-        # Combine texts with clear boundaries (no citations for cleaner fallback)
+        # Combine texts with clear boundaries
         context_parts = [res['text'] for res in verified_results]
-        return "\n\n".join(context_parts)
+        
+        # Check if any chunk came from chat history
+        from_history = any(res.get('source', {}).get('type') == 'chat_history' for res in verified_results)
+        
+        return "\n\n".join(context_parts), from_history
 
     # ======================================================================
     def _clean_context(self, context: str) -> str:
@@ -273,7 +311,7 @@ class HybridPipeline:
           7. Extractive fallback if output is empty / too short
         """
         if self.qwen_model is None or self.qwen_tokenizer is None:
-            logger.warning("⚠️ Qwen2 not available. Using extractive fallback.")
+            logger.warning("Qwen2 not available. Using extractive fallback.")
             return self._extract_best_sentences(text, self._clean_context(context), top_n=2)
 
         # Clean the context (strip citations, separators, etc.)
@@ -296,6 +334,7 @@ class HybridPipeline:
     "DO NOT include separator lines like --- or ===. "
     "DO NOT include numbered list prefixes like '1.' '2.' '3.' unless explaining steps. "
     "Answer in plain natural sentences only."
+    "Finish the sentence in full and add a full stop (.)"
 
     "Hard rules: "
     "1. Maximum 3 sentences. Stop after 3 sentences. "
@@ -339,7 +378,7 @@ class HybridPipeline:
             with torch.no_grad():
                 outputs = self.qwen_model.generate(
                     **inputs,
-                    max_new_tokens=120,
+                    max_new_tokens=256,
                     temperature=0.1,
                     top_p=0.9,
                     repetition_penalty=1.3,
@@ -358,14 +397,14 @@ class HybridPipeline:
 
             # Validate — fall back to extractive if output is invalid
             if not answer or len(answer) < 10:
-                logger.warning("⚠️ Qwen output too short or empty. Using extractive fallback.")
+                logger.warning("Qwen output too short or empty. Using extractive fallback.")
                 return self._extract_best_sentences(text, context, top_n=2)
 
-            logger.info(f"✓ Qwen2 generated answer ({len(answer)} chars)")
+            logger.info(f"Qwen2 generated answer ({len(answer)} chars)")
             return answer
 
         except Exception as e:
-            logger.error(f"❌ Qwen2 generation error: {e}. Using extractive fallback.")
+            logger.error(f"Qwen2 generation error: {e}. Using extractive fallback.")
             return self._extract_best_sentences(text, self._clean_context(context), top_n=2)
 
     # ======================================================================
@@ -376,7 +415,7 @@ class HybridPipeline:
         """
         No relevant context found — log query and return polite not-found message.
         """
-        logger.info(f"⚠️ No context found for KB '{kb_name}'. Logging unverified query.")
+        logger.info(f"No context found for KB '{kb_name}'. Logging unverified query.")
         try:
             self.vector_store.save_unverified_query(text, kb_name=kb_name)
         except Exception as e:
@@ -405,13 +444,13 @@ class HybridPipeline:
                 if json_file and bin_file:
                     # Check if we are already using this KB to avoid redundant loading
                     if self.vector_store.index_path != bin_file or self.vector_store.meta_path != json_file:
-                        logger.info(f"🔄 Switching knowledge base to: {bin_file}")
+                        logger.info(f"Switching knowledge base to: {bin_file}")
                         self.vector_store.load_kb(bin_file, json_file)
 
             # --- Stage 0: Intent ---
             t0 = time.time()
             intent = self.classify_intent(text)
-            logger.info(f"🔍 Stage 0: Intent = '{intent}' ({(time.time()-t0)*1000:.1f}ms)")
+            logger.info(f"Stage 0: Intent = '{intent}' ({(time.time()-t0)*1000:.1f}ms)")
 
             # --- Quick-exit intents (no RAG needed) ---
             if intent == "greeting":
@@ -429,36 +468,39 @@ class HybridPipeline:
                 )
 
             if intent == "navigate":
-                text_lower = text.lower()
-                dest = "chat"
-                if "report"  in text_lower: dest = "report"
-                elif "history" in text_lower: dest = "history"
-                elif "pay"     in text_lower: dest = "payment"
-
-                reply = f"Sure! Redirecting you to the {dest} page now."
-                response = self._build_response(intent, True, reply, start_time)
-                response["redirect_to"] = f"/{dest}" if dest != "chat" else "/"
+                dest = get_navigation_destination(text)
+                if dest:
+                    reply = build_navigation_reply(dest)
+                    response = self._build_response(intent, True, reply, start_time)
+                    response["redirect_to"] = get_redirect_path(dest)
+                else:
+                    reply = "I'm sorry, I don't know how to navigate to that page yet. Would you like me to help you find something else?"
+                    response = self._build_response(intent, False, reply, start_time)
                 return response
             # --- Stage 1: RAG Retrieval ---
-            logger.info("🔎 Stage 1: Searching knowledge base...")
-            context = self.stage1_rag_retrieve(text, intent)
+            logger.info("Stage 1: Searching knowledge base...")
+            context, from_history = self.stage1_rag_retrieve(text, intent)
 
             if context:
                 # --- Stage 2: Qwen2 grounded generation ---
-                logger.info("🧠 Stage 2: Generating grounded response with Qwen2-0.5B-Instruct...")
+                logger.info("Stage 2: Generating grounded response with Qwen2-0.5B-Instruct...")
                 reply = self.stage2_grounded_generation(text, context)
                 
                 # Auto-log interaction as unverified for future learning
-                try:
-                    kb_name = kb_config.get('kb_name', 'General') if kb_config else 'General'
-                    self.vector_store.save_interaction(text, reply, kb_name=kb_name)
-                except Exception as e:
-                    logger.error(f"Error logging interaction: {e}")
+                # SKIP logging if the answer was already sourced from chat history to avoid redundancy
+                if not from_history:
+                    try:
+                        kb_name = kb_config.get('kb_name', 'General') if kb_config else 'General'
+                        self.vector_store.save_interaction(text, reply, kb_name=kb_name)
+                    except Exception as e:
+                        logger.error(f"Error logging interaction: {e}")
+                else:
+                    logger.info("Skipping auto-log: Context sourced from existing chat history.")
                 
                 return self._build_response(intent, True, reply, start_time)
             else:
                 # --- Stage 3: Fallback ---
-                logger.info("🛟 Stage 3: No context found. Using fallback...")
+                logger.info("Stage 3: No context found. Using fallback...")
                 kb_name = kb_config.get('kb_name', 'General') if kb_config else 'General'
                 reply = self.stage3_fallback(text, kb_name=kb_name)
                 return self._build_response(intent, False, reply, start_time)
@@ -475,7 +517,7 @@ class HybridPipeline:
         start_time: float
     ) -> dict:
         total_ms = (time.time() - start_time) * 1000
-        logger.info(f"✨ Query processed in {total_ms:.1f}ms")
+        logger.info(f"Query processed in {total_ms:.1f}ms")
         return {
             "intent": intent,
             "context_found": context_found,

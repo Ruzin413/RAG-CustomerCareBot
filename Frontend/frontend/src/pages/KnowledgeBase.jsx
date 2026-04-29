@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 const GLASS_STYLE = "bg-dark-800/50 backdrop-blur-xl border border-slate-700/50 shadow-2xl";
 const GRADIENT_TEXT = "bg-clip-text text-transparent bg-gradient-to-r from-primary-400 to-fuchsia-400 font-extrabold";
 const UPLOAD_CARD = `${GLASS_STYLE} rounded-3xl p-10 transition-all duration-500 hover:border-primary-500/50 hover:shadow-primary-500/10 cursor-pointer group`;
+const API_KEY = "ft-customer-care-secret-2026";
 
 const KnowledgeBase = () => {
   const navigate = useNavigate();
@@ -19,7 +20,9 @@ const KnowledgeBase = () => {
   const fileInputRef = useRef(null);
   const fetchKBs = async () => {
     try {
-      const response = await fetch('http://localhost:8001/knowledge-bases');
+      const response = await fetch('http://localhost:8001/CustomerCare/knowledge-bases', {
+        headers: { 'X-API-Key': API_KEY }
+      });
       if (response.ok) {
         const data = await response.json();
         setKnowledgeBases(data.knowledge_bases);
@@ -31,8 +34,6 @@ const KnowledgeBase = () => {
   useEffect(() => {
     fetchKBs();
   }, []);
-
-
   const handleFileChange = (e) => {
     const selectedFiles = Array.from(e.target.files);
     if (selectedFiles.length > 0) {
@@ -71,8 +72,9 @@ const KnowledgeBase = () => {
     formData.append('binfile', kbBinFile);
 
     try {
-      const response = await fetch('http://localhost:8001/upload', {
+      const response = await fetch('http://localhost:8001/CustomerCare/upload', {
         method: 'POST',
+        headers: { 'X-API-Key': API_KEY },
         body: formData,
       });
       const result = await response.json();
@@ -207,8 +209,8 @@ const KnowledgeBase = () => {
           >
             <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".pdf,.txt,.docx,.pptx,.ppt" multiple />
             <div className="flex flex-col items-center text-center space-y-4">
-              <div className={`w-20 h-20 rounded-2xl bg-primary-500/10 flex items-center justify-center text-4xl mb-2 transition-transform duration-500 ${loading ? 'animate-spin' : 'group-hover:scale-110'}`}>
-                {loading ? '⚙️' : '📁'}
+              <div className={`w-20 h-20 rounded-2xl bg-primary-500/10 flex items-center justify-center text-[10px] font-bold text-primary-400 mb-2 transition-transform duration-500 ${loading ? 'animate-spin' : 'group-hover:scale-110'}`}>
+                {loading ? '...' : 'UPLOAD'}
               </div>
               <div className="space-y-1">
                 <h3 className="text-2xl font-semibold text-white">{files.length > 0 ? `${files.length} document(s) selected` : "Select documents"}</h3>
@@ -222,7 +224,7 @@ const KnowledgeBase = () => {
               {files.map((f, index) => (
                 <div key={index} className="flex flex-col md:flex-row md:items-center justify-between p-4 rounded-2xl bg-dark-800/40 border border-slate-700/50 gap-4 group transition-all hover:border-slate-600/50">
                   <div className="flex items-center gap-4 flex-1">
-                    <div className="w-10 h-10 rounded-xl bg-primary-500/10 flex items-center justify-center text-xl shrink-0">📄</div>
+                    <div className="w-10 h-10 rounded-xl bg-primary-500/10 flex items-center justify-center text-[10px] font-bold text-primary-400 shrink-0">DOC</div>
                     <div className="flex-1 space-y-1">
                       <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Original: {f.name}</p>
                       <input

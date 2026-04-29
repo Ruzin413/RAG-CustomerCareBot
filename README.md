@@ -28,7 +28,7 @@ A premium, modular Customer Care Assistant built with a **3-Stage Hybrid RAG Pip
 
 ```mermaid
 graph TD
-    User((User)) -->|Query| API[Flask Backend]
+    User((User)) -->|Query| API[FastAPI Backend]
     API --> Intent{MobileBERT Intent}
     Intent -->|Greeting/Goodbye| Template[Template Engine]
     Intent -->|Navigate| Redirect[Router Redirect]

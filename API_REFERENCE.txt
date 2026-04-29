@@ -1,112 +1,173 @@
 RAG Chatbot API Reference
 ==========================
 
-Base URL: http://localhost:8001
+Base URL: http://localhost:8001/CustomerCare
+
+Authorization:
+--------------
+All endpoints require a static API Key for security.
+- Header: X-API-Key: ft-customer-care-secret-2026
+- Cookie: admin_token=ft-customer-care-secret-2026
+- Logic: The backend `verify_token` dependency checks both Header and Cookie. If either contains the correct token, access is granted.
 
 1. Chat & Processing
 --------------------
 POST /process (or /chat)
-Description: The main entry point for the chatbot. It takes a user question, 
-identifies the intent, searches the specified Knowledge Base, and returns 
-a grounded AI response.
+Description: Processes user queries and returns a grounded AI response or navigation command.
+- Headers: { "X-API-Key": "ft-customer-care-secret-2026" }
 - JSON Payload: { "message": String, "kb_name": String }
-- Response: { "status": "success", "answer": String, "intent": String, "source": String }
+- Response: { 
+    "status": "success", 
+    "answer": String, 
+    "intent": String, 
+    "redirect_to": String (Optional), 
+    "source": String 
+  }
+- Navigation Logic: If `intent` is "navigate", the `redirect_to` field will contain the internal URL path (e.g., "/report", "/history"). The frontend should use this to trigger a redirect.
 
 2. Knowledge Base Management
 ----------------------------
 POST /upload
-Description: Initializes a new Knowledge Base or batch-uploads files to an 
-existing one. It processes documents (PDF, DOCX, etc.), chunks them, 
-and creates a searchable FAISS vector index.
-- Multipart Form: 
-    - kb_name (String)
-    - file (Files)
-    - custom_names (String Array)
-- Response: { "status": "success", "total_chunks": Integer, "processed_files": List }
+Description: Initializes a new Knowledge Base system.
+- Headers: { "X-API-Key": "ft-customer-care-secret-2026" }
+- Multipart Form: kb_name (String), file (Files), custom_names (JSON Array)
+- Response: { "status": "success", "total_chunks": Integer }
 
 POST /knowledge-bases/<kb_name>/append
-Description: Adds more documents to an existing Knowledge Base system. 
-This is used in the "Manage Systems" panel to expand an active model 
-without deleting previous data.
-- Multipart Form: 
-    - file (Files)
-    - custom_names (String Array)
-- Response: { "status": "success", "total_chunks": Integer, "processed_files": List }
+Description: Adds more documents to an existing Knowledge Base system.
+- Headers: { "X-API-Key": "ft-customer-care-secret-2026" }
+- Multipart Form: file (Files), custom_names (JSON Array)
+- Response: { "status": "success", "total_chunks": Integer }
 
 GET /knowledge-bases
-Description: Returns a registry of all active Knowledge Systems currently 
-loaded on the server, including their file paths.
+Description: Returns a registry of all active Knowledge Systems.
+- Headers: { "X-API-Key": "ft-customer-care-secret-2026" }
 - Response: { "knowledge_bases": { "Name": { "jsonfile": String, "binfile": String } } }
 
 DELETE /knowledge-bases/<name>
-Description: Completely removes a Knowledge Base system, deleting its 
-metadata file, vector index file, and configuration entry.
-- Response: { "status": "success" }
+Description: Completely removes a Knowledge Base system and its files.
+- Headers: { "X-API-Key": "ft-customer-care-secret-2026" }
+- Response: { "status": "success", "message": String }
 
 3. Learning Loop (Admin)
 ------------------------
 GET /chat-history
-Description: Retrieves logs of interactions that need verification. 
-Supports filtering by KB name and pagination for performance.
-- Query Parameters: kb_name (String), page (Int), page_size (Int)
+Description: Retrieves logs from the centralized `chat_history.json`.
+- Headers: { "X-API-Key": "ft-customer-care-secret-2026" }
+- Query Params: kb_name (String), page (Int), page_size (Int)
 - Response: { "items": List, "total": Int, "page": Int, "total_pages": Int }
 
 POST /unverified/update
-Description: Allows an admin to edit and "Verify" a chat log entry. 
-Once verified, the corrected text is moved from the learning loop 
-into the permanent Knowledge Base index.
-- JSON Payload: { "chunk_id": String, "text": String }
-- Response: { "status": "success" }
+Description: Edits and verifies a chat log entry.
+- Headers: { "X-API-Key": "ft-customer-care-secret-2026" }
+- JSON Payload: { "chunk_id": String, "text": String, "kb_name": String }
+- Response: { "status": "success", "message": String }
 
 POST /unverified/delete
-Description: Permanently discards a chat interaction from the learning 
-loop logs if it is incorrect or irrelevant.
-- JSON Payload: { "chunk_id": String }
-- Response: { "status": "success" }
+Description: Permanently discards a chat interaction from history.
+- Headers: { "X-API-Key": "ft-customer-care-secret-2026" }
+- JSON Payload: { "chunk_id": String, "kb_name": String }
+- Response: { "status": "success", "message": String }
 
-4. Implementation Hooks (Frontend Examples)
--------------------------------------------
+4. Implementation Hooks (Frontend)
+----------------------------------
 
-// 1. Send Chat Message
+const API_KEY = 'ft-customer-care-secret-2026';
+const BASE_URL = 'http://localhost:8001/CustomerCare';
+
+// 1. Chat Processing
 const sendChat = async (message, kbName) => {
-  const res = await fetch('http://localhost:8001/process', {
+  const res = await fetch(`${BASE_URL}/process`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 
+      'Content-Type': 'application/json', 
+      'X-API-Key': API_KEY 
+    },
     body: JSON.stringify({ message, kb_name: kbName })
   });
-  return await res.json();
+  const data = await res.json();
+
+  // Navigation Hook:
+  if (data.redirect_to) {
+    console.log(`Navigating to: ${data.redirect_to}`);
+    // window.location.href = data.redirect_to; // or use useNavigate() in React
+  }
+
+  return data;
 };
 
-// 2. Append Documents to System
-const appendDocs = async (kbName, files) => {
+// 2. Initial Upload / Create KB
+const uploadKB = async (kbName, files) => {
   const formData = new FormData();
+  formData.append('kb_name', kbName);
   files.forEach(f => formData.append('file', f));
-  const res = await fetch(`http://localhost:8001/knowledge-bases/${kbName}/append`, {
+  const res = await fetch(`${BASE_URL}/upload`, {
     method: 'POST',
+    headers: { 'X-API-Key': API_KEY },
     body: formData
   });
   return await res.json();
 };
-// 3. Fetch Paginated History
-const getHistory = async (kbName, page = 1) => {
-  const res = await fetch(`http://localhost:8001/chat-history?kb_name=${kbName}&page=${page}&page_size=10`);
-  return await res.json();
-};
 
-// 4. Verify Interaction
-const verifyEntry = async (chunkId, text) => {
-  const res = await fetch('http://localhost:8001/unverified/update', {
+// 3. Append to Existing KB
+const appendDocs = async (kbName, files) => {
+  const formData = new FormData();
+  files.forEach(f => formData.append('file', f));
+  const res = await fetch(`${BASE_URL}/knowledge-bases/${kbName}/append`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chunk_id: chunkId, text })
+    headers: { 'X-API-Key': API_KEY },
+    body: formData
   });
   return await res.json();
 };
 
-// 5. Delete System
-const deleteSystem = async (name) => {
-  const res = await fetch(`http://localhost:8001/knowledge-bases/${name}`, {
-    method: 'DELETE'
+// 4. List Knowledge Bases
+const getKBs = async () => {
+  const res = await fetch(`${BASE_URL}/knowledge-bases`, {
+    headers: { 'X-API-Key': API_KEY }
+  });
+  return await res.json();
+};
+
+// 5. Delete Knowledge Base
+const deleteKB = async (kbName) => {
+  const res = await fetch(`${BASE_URL}/knowledge-bases/${kbName}`, {
+    method: 'DELETE',
+    headers: { 'X-API-Key': API_KEY }
+  });
+  return await res.json();
+};
+
+// 6. Get Chat History
+const getHistory = async (kbName, page = 1) => {
+  const res = await fetch(`${BASE_URL}/chat-history?kb_name=${kbName}&page=${page}`, {
+    headers: { 'X-API-Key': API_KEY }
+  });
+  return await res.json();
+};
+
+// 7. Verify History Item
+const verifyEntry = async (chunkId, newAnswer, kbName) => {
+  const res = await fetch(`${BASE_URL}/unverified/update`, {
+    method: 'POST',
+    headers: { 
+      'Content-Type': 'application/json', 
+      'X-API-Key': API_KEY 
+    },
+    body: JSON.stringify({ chunk_id: chunkId, text: newAnswer, kb_name: kbName })
+  });
+  return await res.json();
+};
+
+// 8. Discard History Item
+const deleteHistoryItem = async (chunkId, kbName) => {
+  const res = await fetch(`${BASE_URL}/unverified/delete`, {
+    method: 'POST',
+    headers: { 
+      'Content-Type': 'application/json', 
+      'X-API-Key': API_KEY 
+    },
+    body: JSON.stringify({ chunk_id: chunkId, kb_name: kbName })
   });
   return await res.json();
 };

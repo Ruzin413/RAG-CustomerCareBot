@@ -9,7 +9,7 @@
     "text": "i \n \nACKNOWLEDGEMENT \nI would like to express my sincere gratitude to all those who supported and guided me \nthroughout the course of this project.  \nFirst and foremost, I am deeply thankful to my supervisor Mr. Surya Bam, whose expert \nguidance, encouragement, and valuable feedback were instrumental in the successful \ncompletion of this work. \n I would also like to thank Asian School of Management and Technology for providing the",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -21,7 +21,7 @@
     "text": "resources and facilities needed to carry out this project effectively.  \nMy heartfelt thanks go to my friends and family for their constant support, motivation, and \npatience throughout this journey. Finally, I extend my appreciation to everyone who \ncontributed directly or indirectly to the completion of this work.  \nThank you,  \nSamip Giri \nRujin Manandhar",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -33,7 +33,7 @@
     "text": "ii \n \nABSTRACT \nThis project focuses on developing a comprehensive web application for managing and \nbooking tour packages using ASP.NET Core and SQL Server. The application enables \nusers to browse and book tours, while administrators can manage tour details, including \nadding new packages with multiple day-wise hotel accommodations and images. Emphasis \nis placed on creating a robust backend with efficient data handling and secure user",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -45,7 +45,7 @@
     "text": "authentication. Extensive testing, including input validation and error handling, ensures the \nreliability and usability of the system. The project demonstrates the integration of frontend \ntechnologies with a powerful backend framework to deliver a seamless user experience for \nboth customers and administrators.",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -57,7 +57,7 @@
     "text": "iii \n \nTable Of Contents \nACKNOWLEDGEMENT .................................................................................................. i \nABSTRACT ........................................................................................................................ ii \nLIST OF FIGURES ........................................................................................................... v",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -69,7 +69,7 @@
     "text": "LIST OF TABLES ............................................................................................................ vi \nLIST OF ABBREVIATIONS ......................................................................................... vii \nCHAPTER ONE ................................................................................................................ 1 \nINTRODUCTION.............................................................................................................. 1",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -81,7 +81,7 @@
     "text": "1.1 Introduction ................................................................................................................ 1 \n1.2 Problem Statement ..................................................................................................... 1 \n1.3 Objectives .................................................................................................................. 2",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -93,7 +93,7 @@
     "text": "1.4 Scope and Limitation ................................................................................................. 2 \n1.4.1    Scope ................................................................................................................ 2 \n1.4.2 Limitation ............................................................................................................ 2",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -105,7 +105,7 @@
     "text": "1.5 Development Methodology ....................................................................................... 3 \n1.6 Report Organization ................................................................................................... 4 \nCHAPTER TWO ............................................................................................................... 5 \nBACKGROUND STUDY AND LITERATURE REVIEW ........................................... 5",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -117,7 +117,7 @@
     "text": "2.1 Background Study ...................................................................................................... 5 \n2.2 Literature Review....................................................................................................... 5 \nCHAPTER THREE ........................................................................................................... 7 \nSYSTEM ANALYSIS AND DESING .............................................................................. 7",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -129,7 +129,7 @@
     "text": "3.1 System Analysis ......................................................................................................... 7 \n3.1.1 Requirement Analysis ......................................................................................... 7 \n3.1.2 Feasibility Study ................................................................................................. 8 \n3.1.3 High Level Design of System ........................................................................... 10",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -141,7 +141,7 @@
     "text": "3.1.4 Object Modelling .............................................................................................. 10",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -153,7 +153,7 @@
     "text": "iv \n \n3.1.5 Dynamic Modelling .......................................................................................... 12 \n3.1.6 Process Modelling ............................................................................................. 14 \n3.2 System Design ......................................................................................................... 16 \n3.2.1 Refinement of Classes and Object .................................................................... 17",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -165,7 +165,7 @@
     "text": "3.2.2 Component Diagram ......................................................................................... 19 \n3.2.3 Interface design (UI/UX) .................................................................................. 20 \n3.2.4 Deployment Diagram ........................................................................................ 26 \n3.3 Algorithm Details..................................................................................................... 26",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -177,7 +177,7 @@
     "text": "Illustrative Calculation Example ................................................................................ 28 \nCHAPTER FOUR ............................................................................................................ 30 \nIMPLEMENTATION AND TESTING ......................................................................... 30 \n4.1 Implementation ........................................................................................................ 30",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -189,7 +189,7 @@
     "text": "4.2. Testing..................................................................................................................... 44 \n4.2.1. Test Cases for Unit  Testing............................................................................. 44 \n4.2.2. Test Cases for System Testing ......................................................................... 46 \nCHAPTER FIVE ............................................................................................................. 50",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -201,7 +201,7 @@
     "text": "CONCLUSION AND FUTURE RECOMMENDATIONS ......................................... 50 \n5.1 Lesson Learnt ........................................................................................................... 50 \n5.2 Conclusion ............................................................................................................... 50 \n5.3 Future Recommendations ........................................................................................ 50",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -213,7 +213,7 @@
     "text": "REFERENCES ................................................................................................................. 52 \nAPPENDIX ....................................................................................................................... 53",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -225,7 +225,7 @@
     "text": "v \n \nLIST OF FIGURES \nFigure 1.1: Waterfall Model ................................................................................................ 3 \nFigure 3.1: Use Case Diagram ............................................................................................. 8 \nFigure 3.2 :Gantt chart ......................................................................................................... 9",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -237,7 +237,7 @@
     "text": "Figure 3.3 : Object & Class Diagram................................................................................. 11 \nFigure 3.4 : Sequence Diagram .......................................................................................... 12 \nFigure 3.5 : State Diagram ................................................................................................. 13 \nFigure 3.6 : User Activity Diagram ................................................................................... 14",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -249,7 +249,7 @@
     "text": "Figure 3.6 : Admin Activity Diagram ................................................................................ 15 \nFigure 3.7 : Activity Diagram ............................................................................................ 17 \nFigure 3.8: Component Diagram ....................................................................................... 19 \nFigure 3.9 : Deployment Diagram ..................................................................................... 26",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -261,7 +261,7 @@
     "text": "vi \n \nLIST OF TABLES \nTable 4.1 :Admin Login Unit Testing................................................................................ 45 \nTable 4.2: User Registration Unit Testing ......................................................................... 46 \nTable 4.3: User Login Unit Testing ................................................................................... 46 \nTable 4.4: Tour package Inserting System Testing ........................................................... 47",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -273,7 +273,7 @@
     "text": "Table 4.5: Blog Posting System Testing ............................................................................ 48 \nTable 4.6: Tour Package Searching Testing ...................................................................... 49",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -285,7 +285,7 @@
     "text": "vii \n \n \nLIST OF ABBREVIATIONS  \nAPI: \nApplication Programming Interface \nASP.NET: \n Active Server Pages .NET \nDB: \nDatabase \nHTTP: \nHypertext Transfer Protocol \nSQL: \nStructured Query Language \nUI: \nUser Interface \nUX: \nUser Experience \nCRUD: \nCreate, Read, Update, Delete \nMVC: \nModel-View-Controller \nJSON: \nJavaScript Object Notation \nAJAX: \nAsynchronous JavaScript and XML \nREST: \nRepresentational State Transfer",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -297,7 +297,7 @@
     "text": "1 \n \nCHAPTER ONE \nINTRODUCTION \n1.1 Introduction \nThe Travel Agency System provides an efficient and user-friendly platform for travelers to \nbrowse, select, and book tours based on ratings and reviews. Users are required to register \nan account by providing personal details such as name, username, phone number, email, \netc. After registering, users can log in to the system using their username and password.",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -309,7 +309,7 @@
     "text": "Once logged in, users can access their dashboard, where they can browse available tours, \nview personal information, and manage their bookings. In the \"Browse Tours\" section, \nusers can explore different tour packages, check detailed descriptions, and compare ratings \nand reviews before making a booking. Additionally, users can rate tours and provide \nreviews based on their experience, which helps improve future recommendations. A",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -321,7 +321,7 @@
     "text": "recommendation system suggests tours to users based on their previous bookings, location, \nand ratings. In the \"Personal Info\" section, users can view and update their profile details. \nThe admin oversees the management of tour listings, user accounts, and booking records. \nThe admin can also add new tour packages, update existing ones, and remove outdated or \nunavailable packages to ensure smooth operation and a high-quality user experience. \n1.2 Problem Statement",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -333,7 +333,7 @@
     "text": "1.2 Problem Statement \nDespite the rapid growth of the tourism industry, many travelers face challenges in \naccessing accurate and up-to-date travel information, especially in emerging and less \ndocumented destinations. Countries like Nepal, which boast rich cultural heritage and \nbreathtaking natural landscapes, often struggle with fragmented tourism services, lack of \nReliable travel resources, and limited digital accessibility. Tourists frequently encounter",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -345,7 +345,7 @@
     "text": "difficulties in finding trustworthy accommodation options, understanding local attractions, \nand planning efficient itineraries.  \nTo address these challenges, our Travel Agency System aims to create a centralized \nplatform that bridges the gap between travelers and destinations, offering comprehensive, \nreliable, and user-friendly travel solutions. By integrating real-time data, AI-driven the",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -357,7 +357,7 @@
     "text": "2 \n \ntravel planning experience, support local tourism economies, and promote \nresponsible and sustainable tourism practices globally. \n1.3 Objectives \nThe main objective of this project is to provide information about the essential and suitable \nServices for the Users.  \n• Offering detailed travel guides and destination insights.  \n• Providing an easy-to-use platform for booking accommodations and activities.  \n• Enhancing user experience with interactive maps and itinerary planning.",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -369,7 +369,7 @@
     "text": "• Encouraging user engagement through reviews, ratings, and travel blogs. \n1.4 Scope and Limitation \n1.4.1    Scope \nComprehensive Travel Information: The platform will provide detailed insights into \ndestinations, attractions, accommodations, and local experiences.  \n• User Reviews and Ratings: A community-driven review system will help travelers \nmake informed decisions.  \n• Integrated Booking System: Our Travel Agency System will allow users to book \naccommodations and transportation.",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -381,7 +381,7 @@
     "text": "accommodations and transportation.   \n• Interactive Features: Users can engage with dynamic maps \n1.4.2 Limitation \n• Booking and reservation services will rely on external providers, which may affect \navailability and pricing.  \n• Users need an active internet connection to access the platform and its features.  \n• Complexity and issues in the System.  \n• Expensive.",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -393,7 +393,7 @@
     "text": "3 \n \n1.5 Development Methodology \nFor the ExploreEase travel booking system, the Waterfall Model was chosen because the \nproject had clear and fixed requirements from the start, such as tour package browsing, \nbooking management, review submission, and booking extension features. These \nrequirements were discussed and finalized before development began, making a sequential \ndevelopment process appropriate. The Waterfall Model allowed the work to be organized",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -405,7 +405,7 @@
     "text": "into distinct phases—requirement analysis, system design, implementation, testing, \ndeployment, and maintenance—ensuring that each stage was completed before moving on \nto the next. This structure made it easier to track progress, maintain proper documentation, \nand reduce risks, as there was little likelihood of significant changes during the \ndevelopment process. Since the scope was well-defined and the project size was",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -417,7 +417,7 @@
     "text": "manageable, the Waterfall Model provided an efficient and predictable workflow for \nsuccessful completion. \nFigure 1.1: Waterfall Model",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -429,7 +429,7 @@
     "text": "4 \n \n1.6 Report Organization \nThis report document contains five chapters including this chapter. In chapter one, we \nstated introduction, objectives, problem statement and limitation and scope of the system \nwe made. Chapter two defines and describe Background study and Overview of related \nexisting systems, and their pros and cons. Chapter three presents the System Analysis and \nDesign including Requirement Analysis and Feasibility Analysis. Chapter four presents the",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -441,7 +441,7 @@
     "text": "Implementation, Testing and debugging are explained. In chapter five, Conclusion, \nLimitation and Future Enhancement are briefly explained.",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -453,7 +453,7 @@
     "text": "5 \n \nCHAPTER TWO \nBACKGROUND STUDY AND LITERATURE REVIEW \n2.1 Background Study \nWith the rapid growth of internet usage and digital services, the travel and tourism industry \nhas increasingly moved towards online platforms. Tourists today prefer the convenience of \nbrowsing and booking tour packages online instead of visiting physical offices or relying \non travel agents. Many global platforms like TripAdvisor, Booking.com, and Expedia have",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -465,7 +465,7 @@
     "text": "set the standard by providing users with the ability to view ratings, read reviews, and \ncompare tour options before making a decision. \nHowever, many local tour operators still lack a dedicated, transparent system where users \ncan easily explore and book tours based on real customer feedback. Often, users are forced \nto rely on word-of-mouth or social media posts to evaluate the quality of a tour, which may \nnot always be accurate or trustworthy.",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -477,7 +477,7 @@
     "text": "not always be accurate or trustworthy. \nAn Online Tour Booking System with a built-in rating and review feature bridges this gap \nby offering a centralized platform that is accessible, efficient, and transparent. It not only \nempowers users to make informed decisions based on reviews but also helps tour providers \nreach a wider audience and build credibility through consistent service quality. \nThis system aims to improve the overall travel experience by making tour selection more",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -489,7 +489,7 @@
     "text": "reliable and convenient, reducing dependency on manual processes, and encouraging \nhealthy competition among tour providers based on service ratings. \n2.2 Literature Review \nThe tourism industry has experienced significant transformation with the rise of digital \nplatforms that facilitate travel planning, booking, and information sharing. Research \nsuggests that online tourism platforms such as Booking.com,  \n[1] TripAdvisor, and Expedia have revolutionized how travelers access information and",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -501,7 +501,7 @@
     "text": "make bookings. These platforms provide user-generated content, reviews, and real-time \npricing, which significantly influence travel decisions [2]User-generated reviews and peer \nrecommendations play a crucial role in shaping travelers' decisions, as highlighted by \nresearch conducted by Litvin et al. (2008). To ensure reliable information, Travel Agency",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -513,7 +513,7 @@
     "text": "6 \n \nSystem will integrate a robust review and rating system. Additionally, sustainable tourism \npractices are gaining prominence, with studies emphasizing the importance of digital \nplatforms in promoting eco-friendly travel options. Research highlights the growing \ndemand for features such as carbon footprint tracking and green travel recommendations \n.Travel Agency System will integrate sustainability oriented features to encourage",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -525,7 +525,7 @@
     "text": "responsible tourism. [3]Despite the advantages of digital tourism platforms, they face \nchallenges such as misinformation, a lack of content on lesser-known destinations, and \nsecurity concerns .To address these limitations, Travel Agency System will focus on \nproviding verified content, real-time updates, and secure transaction processing. By \nleveraging insights from existing studies and best practices in the tourism industry, this",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -537,7 +537,7 @@
     "text": "project aims to create a more efficient and user-friendly travel experience for global \ntourists.",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -549,7 +549,7 @@
     "text": "7 \n \nCHAPTER THREE \nSYSTEM ANALYSIS AND DESING \n3.1 System Analysis \n3.1.1 Requirement Analysis \nThe system has various requirements that need to be considered, including how it should \nbe built, what features it should offer, and which functions it must support. To gather these \nrequirements, both primary and secondary research methods were used. Primary data was \ncollected by interacting with users of existing systems and noting the features and",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -561,7 +561,7 @@
     "text": "experiences they value most. Secondary data was gathered through online research and by \nanalyzing current tour booking platforms to identify common practices and user \nexpectations. This combined approach helped in forming a well-rounded understanding of \nwhat the new system should include. \nFunctional Requirement \nThis subsection contains the functional requirements for Tourism system. Features from \nproposal are refined into use case diagram to best capture the functional requirement of the",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -573,7 +573,7 @@
     "text": "system.   \n• Allow users to create an account with basic details (name, email, and password) and \noptional information.   \n• Display a list of with details such as name, price, description and images.  \n• Allow users to post reviews and blogs. \n• Allow users to log in and log out securely \n• Allow users to book tour packages by selecting available dates and providing \nnecessary details. \n• Provide users with the ability to view their booking history and details.",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -585,7 +585,7 @@
     "text": "• Enable users to extend or modify existing bookings within allowed limits. \n• Allow users to upload images along with their reviews and blog posts.",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -597,7 +597,7 @@
     "text": "8 \n \n                    \n                      \n \nFigure 3.1: Use Case Diagram  \nNon-Functional Requirements \nThe non-functional requirements of Tourism system are as follows: \n• Security: This system will be secure and the user’s information won't be available \nfor others for user’s privacy  \n• Performance: This system will be designed for smooth performance with \noptimization and good response. \n• Usability: The interface will be user-friendly and intuitive, enabling users of all",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -609,7 +609,7 @@
     "text": "technical backgrounds to navigate the system easily. The system will provide clear \nerror messages and helpful guidance where necessary. \n• Scalability: The system will be designed to accommodate growth in the number of \nusers, bookings, and tour packages without significant degradation in performance. \n3.1.2 Feasibility Study \nTechnical Feasibility",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -621,7 +621,7 @@
     "text": "9 \n \nThe development of Travel Agency System requires a thorough analysis of the technical \nresources and infrastructure necessary for its implementation. The feasibility study assesses \nwhether the proposed system can be developed with the available technologies, tools, and \nexpertise. \nOperational Feasibility \nThe operational feasibility of the Travel Agency System project focuses on assessing how \nwell the system will function in real-world conditions and how efficiently it can be",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -633,7 +633,7 @@
     "text": "integrated into the tourism industry. This includes evaluating user adoption, maintenance, \nand overall usability \nEconomic Feasibility \nThis project is designed to utilize the skills we've acquired during this period, making it \nboth feasible and cost-effective. We're leveraging freely available resources from the \ninternet, minimizing the need for significant financial investment. \nSchedule Feasibility \nThis project is designated to complete within 150 days, and it is successfully completed",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -645,7 +645,7 @@
     "text": "within timeline. No time exceed than our time bounds. So, this system is feasible. The work \ndone through the setup designed is represented in below Gantt chart. \n   Figure 3.2 :Gantt chart \n \nThis Gantt chart illustrates a comprehensive 5-month software development project \nspanning from March to July, showcasing a well-structured approach to project \nmanagement. The project begins with a month-long planning phase in March, where teams",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -657,7 +657,7 @@
     "text": "establish project requirements, define scope, and create strategic roadmaps. \nSimultaneously, the analysis phase starts mid-March and extends through mid-April,",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -669,7 +669,7 @@
     "text": "10 \n \nallowing for thorough examination of system requirements and business needs while \noverlapping with planning activities. \nThe design phase runs from mid-March to mid-May, providing ample time for creating \nsystem architecture, user interface designs, and technical specifications. The most intensive \nperiod occurs during implementation, which spans three months from mid-April to mid-\nJuly, representing the core development work where actual coding takes place. Notably,",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -681,7 +681,7 @@
     "text": "unit testing runs parallel to implementation during this same timeframe, demonstrating best \npractices where individual components are tested as they're developed rather than waiting \nuntil the end. \nFinal testing is scheduled for July, focusing on comprehensive system integration, \nperformance testing, and user acceptance testing once all development is complete. \nThroughout the entire project lifecycle, documentation activities run continuously from",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -693,7 +693,7 @@
     "text": "mid-March to the end of July, ensuring that all processes, decisions, and technical details \nare properly recorded and maintained. This timeline reflects an efficient waterfall \nmethodology with strategic overlaps that maximize resource utilization and maintain \nproject momentum. \n3.1.3 High Level Design of System \nHigh-Level Design (HLD) of the ExploreEase tourism website defines the overall system \narchitecture and main components. The system allows users to browse and book tour",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -705,7 +705,7 @@
     "text": "packages, make payments, and submit reviews, while administrators can manage tours, \nusers, and bookings. It follows a three-layer architecture: Presentation Layer (ASP.NET \nCore Razor/React), Business Logic Layer (services handling bookings, payments, and \nreviews), and Data Access Layer (SQL Server database). HLD ensures all main features, \ndata flow, and interactions are clearly defined and aligned with project requirements before \ndetailed design and implementation. \n3.1.4 Object Modelling",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -717,7 +717,7 @@
     "text": "3.1.4 Object Modelling \nThe Class Diagram serves as a vital tool for representing object modelling within the scope \nof this project. Here different classes: admin, user, complaint are used which have their \ndifferent methods with them.",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -729,7 +729,7 @@
     "text": "11 \n \n \nFigure 3.3 : Object & Class Diagram \nThis UML Class Diagram depicts a tour booking system centered around five \ninterconnected classes. The User class manages user authentication and profile information \nthrough Register(), Login(), and Logout() methods, while maintaining relationships with \nother system components. Users can write Reviews for TourPackages, make Bookings, and \nauthor Blog posts. The TourPackage class contains essential package details like name,",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -741,7 +741,7 @@
     "text": "price, description, and images, with a GetDetails() method for information retrieval. \nThe system allows users to provide feedback through the Review class, which captures \nratings, comments, and review dates via the PostReview() method. Bookings are managed \nthrough the Booking class, offering functionality to make, extend, or cancel reservations \nwith specific dates and package associations. The relationships between classes show a",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -753,7 +753,7 @@
     "text": "comprehensive system where users can interact with tour packages through multiple \ntouchpoints - booking services, reviewing experiences, and sharing content through the \nBlog class - creating an integrated travel platform.",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -765,7 +765,7 @@
     "text": "12 \n \n3.1.5 Dynamic Modelling \nDynamic Modelling within the project is effectively conveyed through the utilization of \nstate and sequence diagram. Sequence diagram and State diagram is provided here for user \nas well as admin. \nFigure 3.4 : Sequence Diagram \nThis UML Sequence Diagram illustrates three main workflows in a tour booking system \nusing a layered architecture with User and Admin actors interacting through UI, Controller, \nService, Repository, and Database components.",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -777,7 +777,7 @@
     "text": "Service, Repository, and Database components. \nThe first scenario shows a user booking process where the User selects a tour package, \ntriggering a request flow from UI through Controller and Service to Repository, which \nsaves the booking in the Database. Confirmation messages flow back through each layer to",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -789,7 +789,7 @@
     "text": "13 \n \ndisplay booking confirmation to the user. The second workflow demonstrates admin \nauthentication, where login credentials are validated by fetching admin data from the \nDatabase through the system layers, ultimately granting dashboard access upon successful \nverification.The final scenario depicts an admin adding a new tour package, where package \ndata flows through the same layered architecture for validation and storage. The diagram",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -801,7 +801,7 @@
     "text": "effectively demonstrates separation of concerns in a multi-tier system, where UI handles \nuser interaction, Controller manages routing, Service contains business logic, Repository \nmanages data access, and Database provides persistence, with each layer confirming \nsuccessful operations back through the chain \n \nFigure 3.5 : State Diagram",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -813,7 +813,7 @@
     "text": "14 \n \nThe process begins when the user opens the website and enters the SEARCHING state, \nwhere they browse available destinations. Once they choose a tour package, they move to \nthe SELECTING state to view detailed information about it. If they decide to proceed, they \nclick “Book Now,” transitioning to the BOOKING state, where they fill in the booking \nform. Upon submitting the form, the process moves to the PAYMENT state, where the user",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -825,7 +825,7 @@
     "text": "makes the required payment. If the payment is successful, the booking enters the \nCONFIRMED state, meaning the reservation is secured. From here, the process can either \nprogress to the COMPLETED state after the tour takes place or be moved to the \nCANCELLED state if the user or admin cancels. Additionally, a payment failure or user \ncancellation during the payment stage will also lead directly to the CANCELLED state, \nmarking the booking as closed. \n3.1.6 Process Modelling",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -837,7 +837,7 @@
     "text": "3.1.6 Process Modelling \nThe admin activity diagram is a key process-modelling component in my project. Admin \nlog in, perform action based on their permissions, and have the option to log out in Travel \nAgency System. The users activity diagram is a pivotal element in my project’s process \nmodelling. User login, enabling them to view dashboard where make complaint, resolved \ncomplaint, pending complaint, in progress complaint and personal info can see \nFigure 3.6 : User Activity Diagram",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -849,7 +849,7 @@
     "text": "15 \n \nThis UML Activity Diagram illustrates the sequential workflow of a user booking process \nin a tour management system. The process begins when a user logs into the system, \nfollowed by browsing available tour packages and selecting a specific package of interest. \nOnce a package is chosen, the user proceeds to enter their booking details, which triggers \na critical validation step represented by a decision diamond asking \"Are booking details",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -861,7 +861,7 @@
     "text": "valid?\".If the booking details fail validation (no path), the system displays an error message \nand loops back to the booking details entry step, allowing the user to correct and resubmit \ntheir information. However, if the validation succeeds (yes path), the system saves the \nbooking to the database and displays a booking confirmation to the user. The workflow \nconcludes with the user logging out of the system, terminating at the final end node. This",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -873,7 +873,7 @@
     "text": "diagram effectively demonstrates error handling through the validation loop, ensuring data \nintegrity before committing bookings to the database, while maintaining a clear linear \nprogression for successful booking scenarios. \n \nFigure 3.6 : Admin Activity Diagram \nThis UML Activity Diagram illustrates the administrative workflow for managing tour \npackages in a tour booking system. The process begins when an admin logs into the system",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -885,7 +885,7 @@
     "text": "and reaches a decision point to \"Choose action,\" which branches into four possible \noperations through a decision diamond labeled \"Operation?\" The admin can select to Add",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -897,7 +897,7 @@
     "text": "16 \n \na new tour package, Edit an existing tour package, Delete a tour package, or Logout from \nthe system. \nEach operation leads to its corresponding activity: \"Add new tour package,\" \"Edit existing \ntour package,\" \"Delete tour package,\" or \"Admin logs out.\" The first three operations (Add, \nEdit, Delete) converge at a \"Continue?\" decision point, where the admin can choose to \nperform additional operations by selecting \"Yes\" (which loops back to the \"Choose action\"",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -909,7 +909,7 @@
     "text": "step) or end the session by selecting \"No\" (which terminates the process). The Logout \noption bypasses this decision and leads directly to the end state. This design allows \nadministrators to perform multiple tour management operations in a single session, \nproviding flexibility to add, modify, or remove tour packages continuously until they \ndecide to exit the system, ensuring efficient bulk management of tour inventory. \n3.2 System Design",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -921,7 +921,7 @@
     "text": "3.2 System Design \nIn this system, it becomes the blueprint for the system, mapping out components, modules \nand data to meet precise requirements. I am actively involved in system development which \nencompasses creating and modifying system, involving various methodologies, model and \npractices to bring them to life. \nThe system architecture serves as a comprehensive framework that defines the structural",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -933,7 +933,7 @@
     "text": "foundation, establishing clear relationships between different layers including presentation, \nbusiness logic, data access, and persistence tiers. This blueprint incorporates design \npatterns such as Model-View-Controller (MVC) and Repository patterns to ensure \nseparation of concerns and maintainability. The development process follows established \nsoftware engineering principles, utilizing both traditional waterfall and agile methodologies",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -945,7 +945,7 @@
     "text": "depending on project requirements and stakeholder needs. Throughout the development \nlifecycle, various modeling techniques are employed including UML diagrams such as \nclass diagrams for object-oriented design, sequence diagrams for interaction flows, state \ndiagrams for behavior modeling, and activity diagrams for process workflows. These visual \nrepresentations facilitate clear communication among team members and stakeholders",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -957,7 +957,7 @@
     "text": "while serving as documentation for future maintenance and enhancements. The \nimplementation phase involves writing clean, maintainable code following industry best \npractices such as SOLID principles, proper error handling, and comprehensive testing \nstrategies.",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -969,7 +969,7 @@
     "text": "17 \n \n3.2.1 Refinement of Classes and Object \nRefinement means breaking down the high-level classes into more detailed classes by \nidentifying attributes, methods, and relationships clearly to better represent the system’s \nreal-world entities and their behaviors. \n \nFigure 3.7 : Activity Diagram \nThis image presents a comprehensive class diagram for a sophisticated tour booking and \nmanagement system, meticulously outlining the system's architecture, components, and",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -981,7 +981,7 @@
     "text": "their interrelationships. At its core, the system is built around several key classes that model \nthe essential entities and functionalities required for a full-featured booking platform. The",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -993,7 +993,7 @@
     "text": "18 \n \nfoundation begins with the User class, which serves as the base entity containing common \nattributes like a read-only user ID, name, unique email address, encrypted password, and \noptional additional information. This base class also includes a registration method, \nestablishing the fundamental user management capability.The system then extends this \nfoundation through specialized user roles, demonstrating a clear inheritance structure. The",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1005,7 +1005,7 @@
     "text": "Customer class inherits from User and adds specific functionality tailored to end-users, \nincluding the ability to maintain a history of bookings and reviews, book tours, extend \nexisting bookings, and view their booking history. On the administrative side, the Admin \nclass (implied by the \"AddTo\" section) extends User with management capabilities like \ntour management, booking oversight, content moderation, and user administration, along",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1017,7 +1017,7 @@
     "text": "with an admin-specific role attribute. This role-based design ensures proper separation of \nconcerns and access control within the system.Central to the system's functionality are the \ncore business objects. The TourPackage class models the tour offerings with attributes like \npackage ID, name, description, price (with a minimum value constraint), images, and \navailability status, along with methods to retrieve details. The Booking class handles",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1029,7 +1029,7 @@
     "text": "reservation tracking with attributes including booking ID, dates, status (using the \nBookingStatus enum with values like CONFIRMED and CANCELLED), and a method to \ncalculate totals. The Review class manages user feedback with content, ratings (constrained \nto 1-5), approval status, and timestamps, while the Blog class handles article content with \ntitles, body text, images, publication dates, and featured status markers.",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1041,7 +1041,7 @@
     "text": "The diagram also introduces key interfaces that standardize behavior across components. \nThe Authenticatable interface defines essential authentication methods (login and logout), \nwhile the ContentManageable interface establishes consistent content operations (posting, \nediting, and deleting). These interfaces promote a modular design where different \ncomponents can implement these standard behaviors as needed. Throughout the",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1053,7 +1053,7 @@
     "text": "specification, data integrity constraints are prominently featured, including read-only \nfields, unique email enforcement, encrypted passwords, value range restrictions, and status \nenumerations. The use of generic collections (like List~Booking~) demonstrates proper \nhandling of object relationships.",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1065,7 +1065,7 @@
     "text": "19 \n \n3.2.2 Component Diagram \nThe component diagram of the Travel Agency System illustrates the high-level structure of \nthe system by showing how different functional modules interact with each other. The \nsystem is divided into several key components to ensure modularity and maintainability. \n \n \n \n \n \n \n \n \nFigure 3.8: Component Diagram \nThis UML Deployment Diagram illustrates the architectural layers and components of a",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1077,7 +1077,7 @@
     "text": "tour booking web application system. The top layer represents the Web Application \ncontaining five key modules: User Interface (built with Razor Pages/JS for frontend \ninteraction), Authentication Module (handling user login and security), Booking Module",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1089,7 +1089,7 @@
     "text": "20 \n \n(managing tour reservations), Review & Blog Module (for user content creation), and \nAdmin Panel (providing administrative controls). \nAll frontend modules connect to the Backend Services layer, which serves as the central \ncommunication hub between the presentation layer and business logic. The backend \ncontains Controllers that handle HTTP requests and route them to appropriate services, \nfollowed by the Service Layer that implements business logic and validation rules. Below",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1101,7 +1101,7 @@
     "text": "this sits the Repository Layer, which abstracts data access operations and provides a clean \ninterface between business logic and data storage. \nThe architecture follows a layered approach where each tier has distinct responsibilities: \nthe web application handles user interaction and presentation, backend services manage \nrequest processing and business rules, and the SQL Server Database at the bottom provides",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1113,7 +1113,7 @@
     "text": "persistent data storage. This separation of concerns ensures maintainability, scalability, and \ntestability, while the repository pattern decouples the application from specific database \nimplementations. The arrows indicate the flow of data and requests through the system \nlayers, demonstrating how user interactions flow down through the architecture to the \ndatabase and responses flow back up to the user interface. \n3.2.3 Interface design (UI/UX)",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1125,7 +1125,7 @@
     "text": "3.2.3 Interface design (UI/UX) \nThe UI design for the ExploreEase tourism system was created using Figma, focusing on \ndelivering a user-friendly, visually appealing, and responsive experience. The design aims \nto make navigation intuitive, ensuring that users can easily browse tours, manage bookings, \nand interact with the platform on both desktop and mobile devices. A clean layout, \nconsistent color palette, and clear typography were used to enhance usability and modern \nappeal.",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1137,7 +1137,7 @@
     "text": "21 \n \n \n \nLogin Page: \n \nThe login page provides users with a simple and clean interface to access their accounts. It \nincludes fields for email and password, a “Remember Password” option, and quick links \nfor password recovery, new user registration, and email confirmation. The prominent blue \nlogin button ensures easy access. \nDashboard Page:",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1149,7 +1149,7 @@
     "text": "22 \n \n \nThis is an administrative dashboard UI. It features a header with navigation links, similar \nto the previous image. The main content is titled \"Dashboard\" and displays key metrics in \nfour cards: \"Total Users,\" \"Total Orders,\" \"Total Revenue,\" and \"Total Tours,\" with \ncorresponding values. Below these metrics, there's a section for \"Recent Order / Bookings.\" \nThis section shows a single recent entry with a \"Booking Id,\" \"User\" and the \"Date\" of the",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1161,7 +1161,7 @@
     "text": "booking, along with an associated amount displayed in a blue button. \nUser Management Page: \n \nThis UI is an administrative dashboard for user management. The page displays a \nnavigation bar with links to various administrative functions, including blogs, booking, and \nservice management. The main content area is a table that lists active users, showing their \nemail addresses and full names, and provides an option to delete a user. The overall design",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1173,7 +1173,7 @@
     "text": "is clean, with a clear focus on managing user accounts.",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1185,7 +1185,7 @@
     "text": "23 \n \nOrder Management Page: \n \nThis UI displays an Order Management page. The content is organized into three sections: \nOngoing Tours, Upcoming Tours, and Done Tours. Each section has a table with columns \nfor UserName, Price, Start Date, End Date, Booking Date, Number of people, and Total \nPrice. There are also action links to delete or view details for each entry. The tables are \npopulated with example data for various users and tour statuses.",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1197,7 +1197,7 @@
     "text": "24 \n \nManage Services Page: \n \nThis UI is a Tour Package management page that displays tour packages in a grid of cards. \nEach card features an image placeholder, tour destination, price, and a star rating. For \nadministrative purposes, each card also includes controls, likely in the form of buttons or \nlinks, to update the price and delete the specific tour package.",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1209,7 +1209,7 @@
     "text": "25 \n \nLanding page: \n \nThe landing page of ExploreEase presents a clean, visually appealing layout with a \nprominent search bar over a background image for quick destination searches. It showcases \na “Recommended for You” section for personalized suggestions and an “All Tour \nPackages” section to explore available options. Each package card displays the tour image, \ntitle, duration, rating, destination, and price, making it easy for users to compare and \nchoose.",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1221,7 +1221,7 @@
     "text": "26 \n \n3.2.4 Deployment Diagram \n \nFigure 3.9 : Deployment Diagram \nThis UML Deployment Diagram shows a three-tier tour booking system with Client \nMachine (Web Browser/Mobile App) communicating via HTTP/HTTPS and REST API to \na Web Server containing UI Layer and API Controllers. The Web Server connects to \nBusiness Logic services (Booking, Content, Auth) that perform CRUD, query, and \nverification operations on a Database Server with SQL Server storing Bookings, Tour",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1233,7 +1233,7 @@
     "text": "Packages, and User Data tables. \n3.3 Algorithm Details \nIn our project, we use a content-based filtering recommendation/Location-based \nrecommendation algorithm using Haversine distance and rating prioritization that suggests \nitems based on the user's recent orders, geographical proximity, and customer ratings. By",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1245,7 +1245,7 @@
     "text": "27 \n \ncalculating the latitude and longitude of the user's latest order, the system identifies nearby \noptions. It then prioritizes recommendations using star ratings to ensure quality, delivering \npersonalized and relevant suggestions effectively. \nRecommendation Algorithm Explanation \nThe system recommends tour packages to a user based on their most recent booking \nlocation and the distance to other tour packages, prioritizing nearby tours with higher",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1257,7 +1257,7 @@
     "text": "ratings. The algorithm works as follows: \nFetch User Payment History: \nRetrieve all previous bookings for the user and identify the most recent booking. Let the  \nLet the latest booked tour package ID be PLATEST, and the coordinates of that package be \n(latU,lonU). \nFilter Tour Packages: \nExclude the last booked package from the list of all available tour packages to avoid \nrecommending the same tour again. \nDistance Calculation:",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1269,7 +1269,7 @@
     "text": "Distance Calculation: \nFor each remaining tour package with coordinates (latI,lonI ), calculate the great-circle \ndistance from the last booked package using the Haversine formula: \n• Convert all Coordinates from degree to radians: \nrad =  deg × 𝜋\n180 \n• Use the  radians(rad) in place of degrees respectively. \n• Apply the formula \n∆𝑙𝑎𝑡= 𝑙𝑎𝑡𝐼−𝑙𝑎𝑡𝑈 \n∆𝑙𝑜𝑛= 𝑙𝑜𝑛𝐼−𝑙𝑜𝑛𝑈 \n𝑎= 𝑠𝑖𝑛2 (∆lat\n2 ) + 𝑐𝑜𝑠(𝑙𝑎𝑡U). 𝑐𝑜𝑠(𝑙𝑎𝑡I). sin2 (∆lon\n2 ) \n𝑐= 2. 𝑎𝑟𝑐𝑡𝑎𝑛2(√a , √1-a ) \n𝑑= 𝑅. 𝑐 \nWhere R=6371km is the Earth’s radius.",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1281,7 +1281,7 @@
     "text": "𝑑= 𝑅. 𝑐 \nWhere R=6371km is the Earth’s radius. \nSorting and Ranking: \n• Sort the tour packages by distance (nearest first). \n• If multiple packages have the same distance, sort by rating (highest first).",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1293,7 +1293,7 @@
     "text": "28 \n \nTop Recommendations: \nSelect the top 5 tour packages as recommendations for the user. \nIllustrative Calculation Example \nWe have: \n• Last Booked Package : (latU,lonU) = (27.7 , 85.3) \n• PackageA: (latA,lonA) = (27.8,85.4) \n• Package B : (latB,LonB) =(27.6,85.5) \n• Earth radius R=6371 km \nConvert degree to radians \n27.7𝑜  × 𝝅\n180 =  0.48332 𝑟𝑎𝑑 \n27.8𝑜  × 𝝅\n180 =  0.48502 𝑟𝑎𝑑 \n27.6𝑜  × 𝝅\n180 =  0.48158 𝑟𝑎𝑑 \n85.3𝑜  × 𝝅\n180 =  1.48869 𝑟𝑎𝑑 \n85.4𝑜  × 𝝅\n180 =  1.49044 𝑟𝑎𝑑 \n85.5𝑜  × 𝝅",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1305,7 +1305,7 @@
     "text": "85.4𝑜  × 𝝅\n180 =  1.49044 𝑟𝑎𝑑 \n85.5𝑜  × 𝝅\n180 =  1.49219 𝑟𝑎𝑑 \nCalculate  ∆𝒍𝒂𝒕 and ∆𝒍𝒂𝒕 \nPackage A: \n∆𝑙𝑎𝑡A = 0.48507 −0.48332 =  0.00175 𝑟𝑎𝑑 \n∆𝑙onA = 0.48507 −0.48332 =  0.00175 𝑟𝑎𝑑 \nPackage B: \n∆𝑙𝑎𝑡B = 0.48158 −0.48332 =  0.00175 𝑟𝑎𝑑 \n∆𝑙onB = 1.49219 −1.48869 =  0.00350 rad \nApply Haversine formula \nPackage A: \naA = 𝑠𝑖𝑛2 (-0.00175\n2\n) + 𝑐𝑜𝑠(0.48332). 𝑐𝑜𝑠(0.48507). sin2 (0.00175\n2\n) \naA  =  7.656 × 10-7 + (0.8850 .  0.8840 .  7.656 × 10-7) \naA  =  7.656 × 10-7 + 5.984 × 10-7",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1317,7 +1317,7 @@
     "text": "29 \n \naA  =  1.364 × 10-6 \nPackage B: \naA = 𝑠𝑖𝑛2 (-0.00175\n2\n) + 𝑐𝑜𝑠(0.48332). 𝑐𝑜𝑠(0.48158). sin2 (0.00350\n2\n) \naA  =  7.656 × 10-7 + (0.8850 .  0.8860 .  3.062 × 10-6) \naA  =  7.656 × 10-7 + 2.397 × 10-6 \naA  =  3.163 × 10-6 \nCalculate c and d  \nPackage A:  \nc A = 2. 𝑎𝑟𝑐𝑡𝑎𝑛2 (√1.364 × 10 -6, √1-1.364 × 10 -6) \nc A  =   0.00233 \ndA  =   6371 ⋅0.00233 \ndA  =   14.84 𝑘𝑚 \nPackage B: \nc B = 2. 𝑎𝑟𝑐𝑡𝑎𝑛2 (√3.163 × 10 -6, √1-3.163 × 10 -6) \nc B  =   0.00356 \ndB  =   6371 ⋅0.00356 \ndB  =   22.66km",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1329,7 +1329,7 @@
     "text": "dB  =   6371 ⋅0.00356 \ndB  =   22.66km \nFinal result : \n• Distance to Package A: 14.84 km \n• Distance to Package B: 22.66 km \nThe algorithm would rank Package A higher based on proximity.",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1341,7 +1341,7 @@
     "text": "30 \n \nCHAPTER FOUR \nIMPLEMENTATION AND TESTING \n4.1 Implementation \nIn this project, the implementation phase involved turning the system’s designs, UML \ndiagrams, and UI/UX prototypes into a fully functional tourism management platform. The \ndevelopment followed a structured, layered architecture to separate concerns and maintain \ncode clarity. \nThe core functionalities, including tour package management, recommendations, user",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1353,7 +1353,7 @@
     "text": "authentication, and content posting, were coded to match the planned requirements. The \ninterface was built according to the Figma designs, ensuring a visually appealing and user-\nfriendly experience. \nOnce the implementation was complete, the system underwent rigorous testing to detect \nand fix any defects early. This helped ensure that the final product was reliable, secure, and \nperformed efficiently before deployment. \n4.1.1 Tool used",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1365,7 +1365,7 @@
     "text": "4.1.1 Tool used \nIn our project, we use ASP.NET Core for backend development and SQL Server for \ndatabase management. Visual Studio is used as the main IDE for coding and project \nmanagement, while SQL Server Management Studio (SSMS) is used to manage and query \nthe database.  \nLanguage used \n• For front end: HTML, CSS, JavaScript \n• For backend: .NET Core \n• Database: SQL Server \nProject Technology Stack Explanation",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1377,7 +1377,7 @@
     "text": "Project Technology Stack Explanation \nOur project is developed using a modern and efficient technology stack to ensure robust \nfunctionality, maintainability, and ease of management. \nBackend Development: \nWe utilize ASP.NET Core as the backend framework. ASP.NET Core is a cross-\nplatform, high-performance framework that enables us to build scalable and secure web \napplications. It provides powerful features such as dependency injection, middleware",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1389,7 +1389,7 @@
     "text": "31 \n \npipelines, and easy integration with various databases, which help streamline the \ndevelopment process and enhance application performance. \nFrontend Development: \nThe frontend of the application is built using standard web technologies: \nHTML for structuring the content on the web pages, \nCSS for styling and layout to ensure an attractive and responsive user interface, \nJavaScript to add interactivity and dynamic behavior, making the user experience more \nengaging and responsive.",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1401,7 +1401,7 @@
     "text": "engaging and responsive. \nDatabase Management: \nFor data storage and management, we use Microsoft SQL Server, a robust relational \ndatabase management system known for its reliability, security features, and efficient \nquery processing. SQL Server allows us to design complex schemas, enforce data \nintegrity, and perform advanced queries to retrieve and manipulate data effectively. \nDevelopment Tools: \nVisual Studio is the primary Integrated Development Environment (IDE) used for writing,",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1413,7 +1413,7 @@
     "text": "debugging, and managing the ASP.NET Core codebase. Visual Studio provides rich tooling \nsupport, including IntelliSense, debugging, and integrated source control, which \nsignificantly improves development productivity. \nSQL Server Management Studio (SSMS) is employed to manage the SQL Server \ndatabases. SSMS offers a user-friendly interface to create, modify, and query the database, \nas well as perform tasks like backup, restore, and performance tuning.",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1425,7 +1425,7 @@
     "text": "4.1.2. Implementation Details of Modules (Admin and User) \n1. User Module \nThe User module is responsible for managing all user-related functionalities, primarily \ntargeted at travelers who use the system to explore and book tour packages. This module \nensures a smooth and secure experience for regular users by providing the following \nfeatures: \nUser Login: \nThis method(OnPostAsync()) handles the login process asynchronously. It first checks if",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1437,7 +1437,7 @@
     "text": "the user input is valid. If valid, it attempts to sign in the user with the provided email and \npassword. On successful login, it checks if the user is an admin and redirects accordingly; \notherwise, it redirects to the original page. It also handles cases like two-factor",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1449,7 +1449,7 @@
     "text": "32 \n \nauthentication, locked accounts, and invalid login attempts, providing appropriate \nresponses for each scenario. \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \npublic async Task<IActionResult> OnPostAsync(string returnUrl = null) \n{ \n    returnUrl ??= Url.Content(\"~/\"); \n \n    ExternalLogins = (await \n_signInManager.GetExternalAuthenticationSchemesAsync()).ToList(); \n \n    if (ModelState.IsValid) \n    {",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1461,7 +1461,7 @@
     "text": "if (ModelState.IsValid) \n    { \n         \n        var result = await _signInManager.PasswordSignInAsync(Input.Email, \nInput.Password, Input.RememberMe, lockoutOnFailure: false); \n        if (result.Succeeded) \n        { \n            var user = await _userManager.FindByEmailAsync(Input.Email); \n            _logger.LogInformation(\"User logged in.\"); \n            if (user != null) \n            { \n                var username = user.FullName; \n \n                if (username.Equals(\"admin\",",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1473,7 +1473,7 @@
     "text": "if (username.Equals(\"admin\", \nStringComparison.OrdinalIgnoreCase)) \n                { \n                    return RedirectToAction(\"Index\", \"Admin\", new { area = \n\"Admin\" }); \n                } \n            } \n            return LocalRedirect(returnUrl); \n        } \n        if (result.RequiresTwoFactor) \n        { \n            return RedirectToPage(\"./LoginWith2fa\", new { ReturnUrl = \nreturnUrl, RememberMe = Input.RememberMe }); \n        } \n        if (result.IsLockedOut)",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1485,7 +1485,7 @@
     "text": "} \n        if (result.IsLockedOut) \n        { \n            _logger.LogWarning(\"User account locked out.\"); \n            return RedirectToPage(\"./Lockout\"); \n        } \n        else \n        { \n            ModelState.AddModelError(string.Empty, \"Invalid login attempt.\"); \n            return Page(); \n        } \n    } \n    // If we got this far, something failed, redisplay form \n    return Page(); \n}",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1497,7 +1497,7 @@
     "text": "33 \n \n \nUser Registration: \nThis asynchronous method handles user registration. It first validates the input, then creates \na new user with the provided details, including full name and email. After successfully \ncreating the user account with a password, it assigns a default \"User\" role, automatically \nconfirms the user's email, and signs them in. If any errors occur during registration, they \nare added to the model state to inform the user.",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1509,7 +1509,7 @@
     "text": "public async Task<IActionResult> OnPostAsync(string returnUrl = null) \n{ \n    returnUrl ??= Url.Content(\"~/\"); \n    ExternalLogins = (await \n_signInManager.GetExternalAuthenticationSchemesAsync()).ToList(); \n \n    if (ModelState.IsValid) \n    { \n        var user = CreateUser(); \n        user.FullName = Input.FullName; \n \n        await _userStore.SetUserNameAsync(user, Input.Email, \nCancellationToken.None);",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1521,7 +1521,7 @@
     "text": "CancellationToken.None); \n        await _emailStore.SetEmailAsync(user, Input.Email, \nCancellationToken.None); \n \n        var result = await _userManager.CreateAsync(user, Input.Password); \n \n        if (result.Succeeded) \n        { \n            _logger.LogInformation(\"User created a new account with \npassword.\"); \n \n            // Assign default role \n            await _userManager.AddToRoleAsync(user, \"User\"); \n \n            // Automatically confirm email",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1533,7 +1533,7 @@
     "text": "// Automatically confirm email \n            var emailConfirmationToken = await \n_userManager.GenerateEmailConfirmationTokenAsync(user); \n            await _userManager.ConfirmEmailAsync(user, \nemailConfirmationToken);",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1545,7 +1545,7 @@
     "text": "34 \n \n \n \n \n \n \n \n \nProfile Management: \nThis method (OnPostAsync()) handles password reset requests. It first checks if the \nsubmitted email is valid and corresponds to a confirmed user account. If so, it generates a \nsecure password reset token, encodes it, and creates a reset link. This link is sent to the \nuser's email. For security, it does not reveal whether the email exists or is confirmed. \nFinally, it redirects to a confirmation page. \n \n \n            // Sign in the user",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1557,7 +1557,7 @@
     "text": "// Sign in the user \n            await _signInManager.SignInAsync(user, isPersistent: false); \n            return LocalRedirect(returnUrl); \n        } \n \n        foreach (var error in result.Errors) \n        { \n            ModelState.AddModelError(string.Empty, error.Description); \n        } \n    } \n \n    return Page(); \n} \npublic async Task<IActionResult> OnPostAsync() \n    { \n        if (ModelState.IsValid) \n        {",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1569,7 +1569,7 @@
     "text": "if (ModelState.IsValid) \n        { \n            var user = await _userManager.FindByEmailAsync(Input.Email); \n            if (user == null || !(await \n_userManager.IsEmailConfirmedAsync(user))) \n            { \n                // Don't reveal that the user does not exist or is not \nconfirmed \n                return RedirectToPage(\"./ForgotPasswordConfirmation\"); \n            } \n \n            // For more information on how to enable account confirmation \nand password reset please",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1581,7 +1581,7 @@
     "text": "and password reset please \n            // visit https://go.microsoft.com/fwlink/?LinkID=532713 \n            var code = await \n_userManager.GeneratePasswordResetTokenAsync(user); \n            code = \nWebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1593,7 +1593,7 @@
     "text": "35 \n \n \n \n \n \n \n \n \n \n \nTour Booking: \nThe controller’s Payment method receives the payment form data from a logged-in user \nand calls the service to process it. The service method InsertIntoPayment reads and \nparses the form values, calculates the total price, and creates a payment record with all \nnecessary details like dates, number of people, price, and user info. It then saves this record \nto the database via the repository method InsertIntoDB. Based on whether the save is",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1605,7 +1605,7 @@
     "text": "successful, the controller returns a success or error view. If any error occurs during \nprocessing or saving, the method returns failure. \n \n \n \n \n \n \n            var callbackUrl = Url.Page( \n                \"/Account/ResetPassword\", \n                pageHandler: null, \n                values: new { area = \"Identity\", code }, \n                protocol: Request.Scheme); \n \n            await _emailSender.SendEmailAsync( \n                Input.Email, \n                \"Reset Password\",",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1617,7 +1617,7 @@
     "text": "\"Reset Password\", \n                $\"Please reset your password by <a \nhref='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.\"); \n \n            return RedirectToPage(\"./ForgotPasswordConfirmation\"); \n        } \n \n        return Page(); \n    } \n} \nController: \n[HttpPost] \n[Authorize(Roles = \"User\")] \n public async Task<IActionResult> Payment(IFormCollection Form) \n { \n     var user = await _userManager.GetUserAsync(User); \n     var username = user?.FullName;",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1629,7 +1629,7 @@
     "text": "var username = user?.FullName; \n     var email = user?.Email;    \n     var result = await _paymentService.InsertIntoPayment(Form, \nusername,email);",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1641,7 +1641,7 @@
     "text": "36 \n \n \n \n \n \n \nView Bookings (My Orders): \nThe UserOrder method in the controller retrieves the logged-in user’s email and fetches \ntheir booking orders via the service layer, then displays the results in a view. The ExtendDate \nmethod accepts a request to extend a booking’s end date by first retrieving the number of \ndays from the tour package, then calling the service to update the booking accordingly. The",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1653,7 +1653,7 @@
     "text": "service layer acts as a bridge, calling repository methods to get user orders and to extend \nthe booking date. In the repository, the orders are fetched from the database by matching \nthe user’s email, and the booking extension updates the end date by adding the specified \nnumber of days, marks the booking as extended, and saves the changes. The methods return \nsuccess or failure based on whether the database operations complete without errors. \n \n \n \n \n \n \n \n \n     if (result) \n     {",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1665,7 +1665,7 @@
     "text": "if (result) \n     { \n         return View(\"PaymentSucess\"); \n     } \n     else \n     { \n         return View(\"PaymentError\"); \n     } \n } \nController: \npublic async Task<IActionResult> UserOrder() \n   { \n      var user = await _userManager.GetUserAsync(User); \n      var email = user?.Email; \n      var model = await _getServices.GetorderByEmail(email); \n      return View(model); \n    } \n[HttpPost] \n public async  Task<bool> ExtendDate(int TourPackageId, int id) \n {",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1677,7 +1677,7 @@
     "text": "{ \n    var data = await _getServices.GetTourPackageById(TourPackageId); \n     var numb = data.NumberOfDays; \n     var sucess = await  _paymentService.ExtendDate(id,numb); \n     return sucess; \n }",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1689,7 +1689,7 @@
     "text": "37 \n \n \nReview Submission: \nThe controller method SubmitReview allows a logged-in user to submit a review for a tour \npackage. It first verifies the user’s identity, then calls the service layer to insert the review \ndetails into the database. After successfully saving the review, it updates the overall rating \nof the related tour package and marks the associated payment as reviewed. The service \nlayer handles the business logic and calls the repository, which creates a new review record",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1701,7 +1701,7 @@
     "text": "with user info, rating, comment, and timestamp, then saves it to the database. The controller \nreturns a JSON response indicating success or any failure that occurs during the process. \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \nController: \n[HttpPost] \n public async Task<IActionResult> SubmitReview(int id, int packageId, int \nrating, string reviewText) \n { \n     var user = await _userManager.GetUserAsync(User); \n     if (user == null)",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1713,7 +1713,7 @@
     "text": "if (user == null) \n         return Json(new { success = false, error = \"User not found\" }); \n \n     var email = user.Email; \n     var name = user.UserName; \n \n     try \n     { \n         var inserted = await _reviewServices.Insertintodb(id, name, email, \npackageId, rating, reviewText); \n         if (!inserted) \n             return Json(new { success = false, error = \"Failed to insert \nreview\" }); \n         var updatedRating = await \n_reviewServices.UpdateTourPackageRatingAsync(packageId);",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1725,7 +1725,7 @@
     "text": "if (!updatedRating) \n             return Json(new { success = false, error = \"Failed to update \nrating\" }); \n \n         await _paymentService.UpdateReview(id); \n \n         return Json(new { success = true }); \n     } \n     catch (Exception ex) \n     { \n         // Log ex \n         return Json(new { success = false, error = ex.Message }); \n     } \n }",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1737,7 +1737,7 @@
     "text": "38 \n \n \nBlog posting: \nThis repository method PostBlog adds a new blog post, which includes the blog’s image \nand text, to the database asynchronously. It inserts the provided blog model—containing \nthe image data and blog content—into the blog table and saves the changes. The method \nreturns true if the operation succeeds by affecting one or more records; otherwise, it returns \nfalse. \n \n \n \n \n \n \n \n \n \n \n \n \n \n \nController: \n[HttpPost]",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1749,7 +1749,7 @@
     "text": "Controller: \n[HttpPost] \n public async Task<IActionResult> PostBlog(IFormCollection Form) \n { \n     var user = await _userManager.GetUserAsync(User); \n     var Email = user.Email; \n     var name = user.UserName; \n     bool  result = await  _blogservices.Postblog(Form,Email,name); \n     if (result) \n     { \n         return Json(new { success = true}); \n     } \n     else \n{ \n         return Json(new { success = true }); \n     } \n }",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1761,7 +1761,7 @@
     "text": "39 \n \n \n \n2. Admin Module \nThe Admin module is designed to give administrative personnel full control over the travel \nagency system. It allows the admin to manage the platform’s content, monitor user activity, \nand maintain operational efficiency. \nDashboard Overview: \nThis method fetches various summary data to display on the dashboard. It retrieves the total \nnumber of users from the user manager, and gets the total orders, total revenue, and total",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1773,7 +1773,7 @@
     "text": "tours from the order services. Additionally, it fetches recent orders, the latest users based \non their IDs, and recent reviews using respective service methods. All this data is then \npassed to the view using ViewBag to be displayed to the user.",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1785,7 +1785,7 @@
     "text": "40 \n \n \n \n \n \n \n \n \n \n \n \n \n \n \nTour Package Addition: \nThis service method processes the form data submitted to create a new tour package. It \nextracts key details such as the tour name, description, number of days, price, destination, \nand geographic coordinates. It also handles uploading and saving the main destination \nimage. For each day of the tour, it collects hotel details including name, description, and",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1797,7 +1797,7 @@
     "text": "location, along with multiple images for each hotel, saving those images appropriately. \nAfter gathering all this information, the method calls the repository to insert the tour \npackage along with its related hotels and images into the database. The method returns a \nsuccess result if everything is saved correctly or returns an error message if any exception \noccurs during the process \nController: \n     public async Task<IActionResult> Index() \n     {",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1809,7 +1809,7 @@
     "text": "{ \n         int totalUsers = await _userManager.Users.CountAsync(); \n         int totalOrders = await _orderDetailServices.GetOrdersCountAsync(); \n// example using service \n         float totalRevenue = await \n_orderDetailServices.GetTotalRevenueAsync(); // example using service \n         int totalTours = await _orderDetailServices.GetToursCountAsync(); \n         var recentOrders = await \n_orderDetailServices.GetRecentOrdersAsync();",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1821,7 +1821,7 @@
     "text": "_orderDetailServices.GetRecentOrdersAsync(); \n         var recentUsers = await GetRecentUsersByHighestIdAsync(5); \n         var recentReviews = await _reviewServices.GetRecentReviewsAsync(); \n         ViewBag.RecentOrders = recentOrders; \n         ViewBag.RecentUsers = recentUsers; \n \n     ViewBag.RecentReviews = recentReviews; \n         ViewBag.TotalUsers = totalUsers; \n         ViewBag.TotalOrders = totalOrders; \n         ViewBag.TotalRevenue = totalRevenue;",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1833,7 +1833,7 @@
     "text": "ViewBag.TotalRevenue = totalRevenue; \n         ViewBag.TotalTours = totalTours; \n         return View(); \n     }",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1845,7 +1845,7 @@
     "text": "41 \n \n \n \n \n \n \n \n \nTour Package Management: \nThese two methods handle update and delete operations for tour packages. The \nDeletePackage method receives a tour package ID and calls the service to delete the \ncorresponding package, then returns a successful response. The UpdatePackagePrice \nmethod takes a package ID and a new price, calls the service to update the price, and returns \na success response if the update succeeds; otherwise, it returns a bad request indicating \nfailure",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1857,7 +1857,7 @@
     "text": "failure \n \n \n \n \n \n \n \n \n \n[HttpPost] \n public async Task<IActionResult> AddServices(IFormCollection form) \n { \n     var result = await _tourServices.InsertAllAsync(form); \n     if (result.IsSuccess){ \n         return RedirectToAction(\"AddServises\"); \n     } \n     else{ \n         return RedirectToAction(\"ErrorAddServices\"); \n     } \n } \nController: \n[HttpPost] \n public async Task<IActionResult> DeletePackage(int tourPackageId) \n {",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1869,7 +1869,7 @@
     "text": "{ \n     var resutlt = _getServices.DeletePackageById(tourPackageId); \n     return Ok(); \n } \n  public async Task<IActionResult> UpdatePackagePrice(int tourPackageId, \nint updatedPrice) \n  { \n      var result =  _getServices.UpdatePackagePrice(tourPackageId, \nupdatedPrice); \n      if(result) \n          return Ok(); \n      return BadRequest(\"Update Failed\"); \n  }",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1881,7 +1881,7 @@
     "text": "42 \n \n \nBooking Management: \nThis method deletes an order based on the provided ID by calling the service layer. If the \ndeletion is successful, it returns an HTTP 200 OK response; otherwise, it returns a Bad \nRequest response indicating the deletion failed. \n \n \n \n \n \n \nUser Monitoring: \nThis method handles the deletion of a user identified by their unique ID. It first attempts to \nfind the user in the user management system. If the user exists, it proceeds to delete the",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1893,7 +1893,7 @@
     "text": "user asynchronously. Regardless of whether the deletion was successful or the user was \nfound, the method returns a view that displays the updated list of users, allowing the \nadministrator to see the current user status after the operation. \n \npublic async Task<IActionResult> DeleteOrder(int id) \n { \n     var result = _getServices.DeleteOrderById(id); \n     if (result) \n         return Ok();  \n     return BadRequest(\"Delete failed.\"); \n }",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1905,7 +1905,7 @@
     "text": "43 \n \n \n \n \n \n \n \n \nEmail Sending: \nThis method sends an HTML email using Gmail’s SMTP server by logging in with the \nsender’s Gmail credentials, creating a mail message with the recipient, subject, and body, \nand sending it securely via SSL. It returns true if successful, otherwise false. \n \n \n \n[HttpPost] \n public async Task<IActionResult> DeleteUser(string id) \n { \n     var user = await _userManager.FindByIdAsync(id); \n     var result = new IdentityResult(); \n     if (user != null) \n     {",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1917,7 +1917,7 @@
     "text": "if (user != null) \n     { \n         result = await _userManager.DeleteAsync(user); \n     } \n     return View(Users); \n } \npublic bool SendEmail(string toEmail, string subject, string body) \n    { \n        try \n        { \n            var fromEmail = \"exploreease413@gmail.com\"; \n            var fromPassword = \"fqwiailnxkedcsoj\";  \n \n            using (var smtp = new SmtpClient(\"smtp.gmail.com\", 587)) \n            { \n                smtp.Credentials = new NetworkCredential(fromEmail,",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1929,7 +1929,7 @@
     "text": "fromPassword); \n                smtp.EnableSsl = true; \n \n                var message = new MailMessage(fromEmail, toEmail, subject, \nbody) \n                { \n                    IsBodyHtml = true  \n                }; \n \n                smtp.Send(message); \n            } \n \n            return true;",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1941,7 +1941,7 @@
     "text": "44 \n \n \n4.2. Testing  \nTesting is evaluation of the software against requirements gathered from users and system \nspecifications. Testing identifies important defects, flaws, or an error in the application \ncode that must be fixed. It also assesses the features of a system. Testing assesses the quality \nof the product. The Vehicle Renting System was tested both individually and all together. \n4.2.1. Test Cases for Unit  Testing",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1953,7 +1953,7 @@
     "text": "4.2.1. Test Cases for Unit  Testing  \nUnit testing is the process of testing individual components or functions of a software \napplication in isolation to ensure they work correctly. It focuses on the smallest parts of the \ncode, like methods or classes. \nWhat do we do? \n• Test a single function or method independently. \n• Use test inputs and check if the output or behavior is as expected. \n• Mock or simulate dependencies to isolate the unit being tested.",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1965,7 +1965,7 @@
     "text": "• Catch bugs early in the development cycle. \n• Automate tests so they can run frequently. \nAdmin Login",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1977,7 +1977,7 @@
     "text": "45 \n \nPrecondition Test \nScenario \nTest data \nExpected Outcome \nAdmin \ninvalid login \nAdmin \nenters \ninvalid \nusername \nor \npassword \nUsername: admin \nPassword: admin \n \nAdmin login \nTesting 2 \nAdmin \nenters \nvalid \nusername \nand \npassword \nUsername: \nAdmin413@gmail.com \nPassword: Admin@123 \n \nTable 4.1 :Admin Login Unit Testing \nUser Registration  \nPrecondition Test Scenario \nTest data \nExpected Outcome \nUser \nRegistration \nTesting 1 \nEnters invalid \nusername, \nemail, \npassword and \nconfirm",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -1989,7 +1989,7 @@
     "text": "username, \nemail, \npassword and \nconfirm \npassword \nUsername: user \nEmail: usergmail.com \nPassword: user \nConfirm password: \nusre",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -2001,7 +2001,7 @@
     "text": "46 \n \nUser \nRegistration \nTesting 1 \nEnters \nvalid \nusername, \nemail, \npassword and \nconfirm \npassword \nUsername: user \nEmail:user413@gmail.\ncom Password: \nuser123@ \nConfirm password: \nuser123@ \n \nTable 4.2: User Registration Unit Testing \nUser Login \nPrecondition Test \nScenario \nTest data \nExpected Outcome \nUser Login \nTesting 1 \nUser \nenters \ninvalid \nusername \nor \npassword \nUsername : \nusergmail.com \nPassword : usre \n \nUser Login \nTesting 2 \nUser \nenters \nvalid \nusername \nor \npassword",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -2013,7 +2013,7 @@
     "text": "User \nenters \nvalid \nusername \nor \npassword \nUsername : \nuser413@gmail.com \nPassword : \nuser123@ \n \nTable 4.3: User Login Unit Testing \n4.2.2. Test Cases for System Testing  \nSystem testing is the process of testing the complete and integrated software system to \nverify that it meets all requirements. It evaluates the system’s behavior as a whole \nWhat do we do? \n• Test the entire application in an environment similar to production.",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -2025,7 +2025,7 @@
     "text": "47 \n \n• Verify end-to-end workflows and integration between components. \n• Check functional requirements, performance, security, and usability. \n• Validate how the system handles real user scenarios and data. \n• Identify any issues before release. \nTour package inserting \nPrecondition Test \nscenario \nTest data \nExpected Outcome \nTour package \nInserting 1 \n \nAdmin \nenters \ninvalid \ndata \nName: null \nDescription: \nnull \nPrice: -100 \nDestination: \nnull \n \nTour package \nInserting 2 \n \nAdmin",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -2037,7 +2037,7 @@
     "text": "null \n \nTour package \nInserting 2 \n \nAdmin \nenters \nproper \ndata \nName: \n\"Amazing \nNepal \nTour\" \nDescription: \n\"A 5-day \ntrip \nexploring \nthe \nbeautiful \nlandscapes \nof Nepal.\" \nPrice: \n499.99 \nDestination: \nKathmandu  \n \nTable 4.4: Tour package Inserting System Testing",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -2049,7 +2049,7 @@
     "text": "48 \n \nBlog Posting \nPrecondition \nTest scenario \nTest data \nExpected Outcome \nBlog Posting \ntest 1 \n \nUser inputs \ninvalid data \nBlog image :  \nImg.pdf \nBlog text : null  \n \nBlog Posting \ntest 2 \n \nUser inputs \nproper data \nBlog image :  \nImg.jpg \nBlog text : “test \nblog” \n \nTable 4.5: Blog Posting System Testing \nTour Package searching  \nPrecondition Test \nscenario \nTest data \nExpected Outcome \nTour Package \nsearching 1 \n \nUser \ninputs \ninvalid \nsearch \ndata  \nData: \nhsofodoshfos",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -2061,7 +2061,7 @@
     "text": "49 \n \nTour Package \nsearching  2 \n \nUser \ninputs \nproper \nsearch \ndata \nData: \nKathmandu \n \nTable 4.6: Tour Package Searching Testing",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -2073,7 +2073,7 @@
     "text": "50 \n \nCHAPTER FIVE \n CONCLUSION AND FUTURE RECOMMENDATIONS \n5.1 Lesson Learnt \nThis project has provided valuable experience in developing a complete web-based travel \nagency system with features such as tour package management, user booking, location-\nbased recommendations, and online payment integration. It enhanced understanding of \nboth client-side (HTML, CSS, JavaScript) and server-side (ASP.NET Core, C#) \ndevelopment. .Through this project, knowledge was gained in database design, data",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -2085,7 +2085,7 @@
     "text": "retrieval using LINQ, and layered architecture involving repositories, services, and \ncontrollers. It also improved familiarity with AJAX-based form submissions, payment \ngateway integration, and user-centric design principles. In addition, this project encouraged \nbetter team collaboration, time management, and the ability to apply theoretical knowledge \nfrom software engineering and database management courses in a real-world application.",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -2097,7 +2097,7 @@
     "text": "Overall, it significantly contributed to skills in web development, problem solving, and \nproject execution  \n5.2 Conclusion \nThe project successfully delivers a functional and user-friendly tour and travel booking \nsystem. It offers an attractive interface and smooth navigation for both users and admins. \nThe system allows users to explore travel packages, make bookings, submit reviews, and \nreceive personalized tour recommendations based on previous bookings.This travel agency",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -2109,7 +2109,7 @@
     "text": "system fulfills its defined objectives, such as improving the booking experience, enhancing \naccessibility to travel information, and reducing the manual workload of tour operators. It \nalso addresses limitations found in traditional systems by offering real-time booking, geo-\nlocation-based suggestions, and better user engagement. \n5.3 Future Recommendations \nThe following improvements are recommended for future versions of the travel agency \nsystem:",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -2121,7 +2121,7 @@
     "text": "51 \n \n• \nEnhance User Interface by adding more interactive elements, animations, and \nresponsive layouts for mobile devices. \n• \nIntegrate Advanced Filters to allow users to search packages by location, price \nrange, duration, or theme. \n• \nAdd Multi-language Support to make the platform more accessible to \ninternational users. \n• \nImprove Security by adding two-factor authentication, CAPTCHA, and secure \npayment handling.",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -2133,7 +2133,7 @@
     "text": "52 \n \nREFERENCES  \n[1] U. Gretzel and K. H. Yoo, “Use and impact of online travel reviews,” in Information \nand Communication Technologies in Tourism 2008, Springer, Vienna, 2008, pp. 35–46. \ndoi: 10.1007/978-3-211-77280-5_4. \n[2] S. W. Litvin, R. E. Goldsmith, and B. Pan, “Electronic word-of-mouth in hospitality \nand tourism management,” Tourism Management, vol. 29, no. 3, pp. 458–468, Jun. 2008. \ndoi: 10.1016/j.tourman.2007.05.011.",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -2145,7 +2145,7 @@
     "text": "doi: 10.1016/j.tourman.2007.05.011. \n[3] R. Buckley, “Sustainable tourism: Research and reality,” Annals of Tourism Research, \nvol. 39, no. 2, pp. 528–546, Apr. 2012. doi: 10.1016/j.annals.2012.02.003. \n[4] Z. Xiang, D. R. Fesenmaier, B. Tussyadiah, and C. Wöber, “Analytics for hotel revenue \nmanagement: A review of data sources and methods,” in Information and Communication \nTechnologies in Tourism 2015, Springer, Cham, 2015, pp. 15–28. doi: 10.1007/978-3-319-\n14343-9_2.",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
+    "created_at": "2026-04-29T10:41:24"
   },
   {
     "doc_id": "doc.pdf",
@@ -2157,20 +2157,6 @@
     "text": "53 \n \nAPPENDIX \nSCREENSHOT \n \n \n \n \n \n \nLogin Page \n \n \n \nRegister Page\n\n54 \n \n \nAdmin Dashboard \n \n \n \nBlog Page\n\n55 \n \n \nHome page \n \n     User order page\n\n56 \n \n \nSearch page",
     "tags": [],
     "verified": true,
-    "created_at": "2026-04-28T16:10:10"
-  },
-  {
-    "doc_id": "chat_interaction",
-    "chunk_id": "chat_1777372939",
-    "kb_name": "TourBooking",
-    "source": {
-      "type": "chat_history"
-    },
-    "text": "Question: WHo is the supervisor of the project\nAnswer: The supervisor of the project is Mr. Surya Bam.",
-    "tags": [
-      "chat_history"
-    ],
-    "verified": false,
-    "created_at": "2026-04-28T16:27:19"
+    "created_at": "2026-04-29T10:41:24"
   }
 ]
