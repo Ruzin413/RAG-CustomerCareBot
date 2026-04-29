@@ -73,7 +73,7 @@ npm run dev
 
 ## 📖 API Documentation
 
-Detailed documentation is available in **[API_REFERENCE.md](./API_REFERENCE.md)** and **[API_REFERENCE.txt](./API_REFERENCE.txt)**.
+Detailed documentation is available in **[API_REFERENCE.md](./API_REFERENCE.md)**.
 
 | Endpoint | Method | Description |
 | :--- | :--- | :--- |
@@ -84,6 +84,7 @@ Detailed documentation is available in **[API_REFERENCE.md](./API_REFERENCE.md)*
 | `/unverified/update` | `POST` | Verify and promote a memory item to KB |
 | `/knowledge-bases` | `GET` | List all active Knowledge Systems |
 | `/stats` | `GET` | Get current vector store statistics |
+| `/clear-cache` | `POST` | Manually clear model memory (RAM/VRAM) |
 
 ---
 

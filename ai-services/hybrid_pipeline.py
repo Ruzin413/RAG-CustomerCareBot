@@ -255,7 +255,7 @@ class HybridPipeline:
         if intent not in ["faq", "support"]:
             return "", False
 
-        results = self.vector_store.search(text, top_k=5, threshold=0.50)
+        results = self.vector_store.search(text, top_k=5, threshold=0.55)
         logger.info(f"Vector search returned {len(results)} potential matches (Threshold: 0.75)")
         
         if not results:

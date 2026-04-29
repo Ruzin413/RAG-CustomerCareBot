@@ -393,7 +393,7 @@ async def delete_unverified(data: DeleteUnverifiedRequest):
 
 @router.post('/memory/add', dependencies=[Depends(verify_token)])
 async def add_memory(request: MemoryAddRequest):
-    """Manually add a verified Q/A pair to a specific knowledge base"""
+    """Manually add a verified Q/A pair to a specific knowledge base (saved to central history)"""
     try:
         kb_config = load_kb_config()
         kb_name = request.kb_name
@@ -401,16 +401,13 @@ async def add_memory(request: MemoryAddRequest):
         if kb_name not in kb_config:
             raise HTTPException(status_code=404, detail=f"KB '{kb_name}' not found")
         
-        target = kb_config[kb_name]
-        # Switch to the correct KB index/meta files
-        if vector_store.index_path != target['binfile'] or vector_store.meta_path != target['jsonfile']:
-            logger.info(f"Switching KB to '{kb_name}' to add manual question")
-            vector_store.load_kb(target['binfile'], target['jsonfile'])
+        # Save as a permanent verified memory item in centralized history
+        success = vector_store.save_memory(request.question, request.answer, kb_name=kb_name)
         
-        # Save as a permanent verified memory item
-        vector_store.save_memory(request.question, request.answer)
-        
-        return {"status": "success", "message": f"Successfully added new question to '{kb_name}'"}
+        if success:
+            return {"status": "success", "message": f"Successfully added new question to '{kb_name}' chat history"}
+        else:
+            return {"status": "warning", "message": f"This question already exists in '{kb_name}' history"}
     except Exception as e:
         logger.error(f"Add memory error: {e}")
         raise HTTPException(status_code=500, detail=str(e))

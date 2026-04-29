@@ -20,57 +20,83 @@ Description: Processes user queries and returns a grounded AI response or naviga
     "status": "success", 
     "answer": String, 
     "intent": String, 
-    "redirect_to": String, //it comes if the intent is navigate 
-    "source": String 
+    "redirect_to": String, // included if intent is "navigate"
+    "source": String,      // "Knowledge Base" or "Fallback"
+    "metadata": {
+        "timestamp": String,
+        "timing_breakdown": { "total_latency": String }
+    }
   }
-- Navigation Logic: If `intent` is "navigate", the `redirect_to` field will contain the internal URL path (e.g., "/report", "/history"). The frontend should use this to trigger a redirect.
+
+POST /clear-cache
+Description: Manually unloads AI models from memory (RAM/VRAM). Useful for clearing resources without restarting the server.
+- Response: { "status": "success", "message": String }
+
+GET /health
+Description: Basic health check for monitoring.
+- Response: { "status": "healthy", "service": "Chatbot API", "timestamp": String }
 
 2. Knowledge Base Management
 ----------------------------
 POST /upload
-Description: Initializes a new Knowledge Base system.
+Description: Initializes a new Knowledge Base system or adds files to an existing one.
 - Headers: { "X-API-Key": "ft-customer-care-secret-2026" }
-- Multipart Form: kb_name (String), file (Files), custom_names (JSON Array)
-- Response: { "status": "success", "total_chunks": Integer }
+- Multipart Form: kb_name (String), file (Files), custom_names (JSON Array string)
+- Response: { 
+    "status": "success", 
+    "total_chunks": Integer,
+    "processed_files": List,
+    "failed_files": List 
+  }
 
 POST /knowledge-bases/<kb_name>/append
-Description: Adds more documents to an existing Knowledge Base system.
+Description: Adds more documents specifically to an existing Knowledge Base.
 - Headers: { "X-API-Key": "ft-customer-care-secret-2026" }
-- Multipart Form: file (Files), custom_names (JSON Array)
+- Multipart Form: file (Files), custom_names (JSON Array string)
 - Response: { "status": "success", "total_chunks": Integer }
 
 GET /knowledge-bases
 Description: Returns a registry of all active Knowledge Systems.
 - Headers: { "X-API-Key": "ft-customer-care-secret-2026" }
-- Response: { "knowledge_bases": { "Name": { "jsonfile": String, "binfile": String } } }
+- Response: { "status": "success", "knowledge_bases": { "Name": { "jsonfile": String, "binfile": String } } }
 
 DELETE /knowledge-bases/<name>
-Description: Completely removes a Knowledge Base system and its files.
+Description: Completely removes a Knowledge Base system and its files (.bin and .json).
 - Headers: { "X-API-Key": "ft-customer-care-secret-2026" }
 - Response: { "status": "success", "message": String }
+
+GET /stats
+Description: Returns the total number of chunks currently loaded in the active vector store.
+- Response: { "status": "success", "total_chunks": Integer }
 
 3. Learning Loop (Admin)
 ------------------------
 GET /chat-history
 Description: Retrieves logs from the centralized `chat_history.json`.
 - Headers: { "X-API-Key": "ft-customer-care-secret-2026" }
-- Query Params: kb_name (String), page (Int), page_size (Int)
-- Response: { "items": List, "total": Int, "page": Int, "total_pages": Int }
+- Query Params: kb_name (Optional String), page (Int), page_size (Int)
+- Response: { 
+    "status": "success",
+    "items": List, 
+    "total": Int, 
+    "page": Int, 
+    "total_pages": Int 
+  }
 
 POST /unverified/update
-Description: Edits and verifies a chat log entry.
+Description: Edits and verifies a chat log entry. This moves the item into the "verified" category for RAG retrieval.
 - Headers: { "X-API-Key": "ft-customer-care-secret-2026" }
-- JSON Payload: { "chunk_id": String, "text": String, "kb_name": String }
+- JSON Payload: { "chunk_id": String, "text": String, "kb_name": String (Optional) }
 - Response: { "status": "success", "message": String }
 
 POST /unverified/delete
-Description: Permanently discards a chat interaction from history.
+Description: Permanently discards a chat interaction from the centralized history.
 - Headers: { "X-API-Key": "ft-customer-care-secret-2026" }
-- JSON Payload: { "chunk_id": String, "kb_name": String }
+- JSON Payload: { "chunk_id": String, "kb_name": String (Optional) }
 - Response: { "status": "success", "message": String }
 
 POST /memory/add
-Description: Manually insert a verified Q/A pair into a specific system.
+Description: Manually insert a pre-verified Q/A pair.
 - Headers: { "X-API-Key": "ft-customer-care-secret-2026" }
 - JSON Payload: { "question": String, "answer": String, "kb_name": String }
 - Response: { "status": "success", "message": String }
@@ -96,7 +122,7 @@ const sendChat = async (message, kbName) => {
   // Navigation Hook:
   if (data.redirect_to) {
     console.log(`Navigating to: ${data.redirect_to}`);
-    // window.location.href = data.redirect_to; // or use useNavigate() in React(react-router-dom)
+    // window.location.href = data.redirect_to; // or use useNavigate() in React
   }
 
   return data;
@@ -146,7 +172,8 @@ const deleteKB = async (kbName) => {
 
 // 6. Get Chat History
 const getHistory = async (kbName, page = 1) => {
-  const res = await fetch(`${BASE_URL}/chat-history?kb_name=${kbName}&page=${page}`, {
+  const url = kbName ? `${BASE_URL}/chat-history?kb_name=${kbName}&page=${page}` : `${BASE_URL}/chat-history?page=${page}`;
+  const res = await fetch(url, {
     headers: { 'X-API-Key': API_KEY }
   });
   return await res.json();
@@ -174,6 +201,19 @@ const deleteHistoryItem = async (chunkId, kbName) => {
       'X-API-Key': API_KEY 
     },
     body: JSON.stringify({ chunk_id: chunkId, kb_name: kbName })
+  });
+  return await res.json();
+};
+
+// 9. Manual Add Memory
+const addManualMemory = async (question, answer, kbName) => {
+  const res = await fetch(`${BASE_URL}/memory/add`, {
+    method: 'POST',
+    headers: { 
+      'Content-Type': 'application/json', 
+      'X-API-Key': API_KEY 
+    },
+    body: JSON.stringify({ question, answer, kb_name: kbName })
   });
   return await res.json();
 };
@@ -206,7 +246,7 @@ To add a new redirect:
 ----------------------------------
 The system enforces security via the `verify_token` dependency in `app.py`:
 
-ADMIN_TOKEN = "ft-customer-care-secret-2026"
+ADMIN_TOKEN = os.getenv("ADMIN_TOKEN", "ft-customer-care-secret-2026")
 
 def verify_token(x_api_key: str = Header(None), admin_token: str = Cookie(None)):
     # Logic: Priority to Header, fallback to Cookie

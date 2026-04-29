@@ -227,13 +227,14 @@ class VectorStore:
         """Log an unanswered user query for admin review in centralized chat history."""
         normalized_q = question.strip().lower()
         
-        # Duplicate check in centralized history
+        # Global duplicate check in centralized history
         for item in self.chat_history:
-            if item.get("doc_id") == "unverified_query" and item.get("kb_name") == kb_name:
-                existing_q = item.get("original_question", "").strip().lower()
-                if existing_q == normalized_q:
-                    logger.info(f"Skipping duplicate unverified query in centralized history: {question[:30]}...")
-                    return
+            if item.get("kb_name") == kb_name:
+                # Check all possible question fields
+                q = (item.get("question") or item.get("original_question") or "").strip().lower()
+                if q == normalized_q:
+                    logger.info(f"Skipping duplicate query in centralized history: {question[:30]}...")
+                    return False
 
         chunk = {
             "doc_id": "unverified_query",
@@ -251,18 +252,19 @@ class VectorStore:
         self.chat_history.append(chunk)
         self._save_chat_history()
         logger.info(f"Saved unverified query to centralized history for KB '{kb_name}'")
+        return True
 
     def save_interaction(self, question, answer, kb_name="General"):
         """Automatically log an AI interaction in centralized chat history."""
         normalized_q = question.strip().lower()
         
-        # Duplicate check in centralized history
+        # Global duplicate check in centralized history
         for item in self.chat_history:
-            if item.get("doc_id") == "chat_interaction" and item.get("kb_name") == kb_name:
-                text = item.get("text", "")
-                if text.lower().startswith(f"question: {normalized_q}"):
+            if item.get("kb_name") == kb_name:
+                q = (item.get("question") or item.get("original_question") or "").strip().lower()
+                if q == normalized_q:
                     logger.info(f"Skipping duplicate chat interaction in centralized history: {question[:30]}...")
-                    return
+                    return False
 
         full_text = f"Question: {question}\nAnswer: {answer}"
 
@@ -281,15 +283,25 @@ class VectorStore:
         self.chat_history.append(chunk)
         self._save_chat_history()
         logger.info(f"Automatically logged AI interaction to centralized history for KB '{kb_name}'")
+        return True
 
-    def save_memory(self, question, answer, tags=None):
+    def save_memory(self, question, answer, kb_name="General", tags=None):
         """
-        Save a verified Q/A pair as a memory item.
+        Save a verified Q/A pair as a memory item in centralized chat history.
         Use this only when both question AND answer are known/verified.
-        For unanswered queries use save_unverified_query() instead.
         """
+        normalized_q = question.strip().lower()
+        
+        # Global duplicate check in centralized history
+        for item in self.chat_history:
+            if item.get("kb_name") == kb_name:
+                q = (item.get("question") or item.get("original_question") or "").strip().lower()
+                if q == normalized_q:
+                    logger.info(f"Skipping duplicate manual memory item: {question[:30]}...")
+                    return False
+
         if tags is None:
-            tags = ["memory"]
+            tags = ["memory", "verified"]
 
         # Remove 'unverified' tag if caller accidentally included it
         tags = [t for t in tags if t != "unverified"]
@@ -297,14 +309,20 @@ class VectorStore:
         chunk = {
             "doc_id": "memory_item",
             "chunk_id": f"memory_{int(time.time())}",
-            "source": {"type": "conversation"},
-            "text": f"Question: {question}\nAnswer: {answer}",
+            "kb_name": kb_name,
+            "source": {"type": "manual_entry"},
+            "question": question,
+            "answer": answer,
             "tags": tags,
             "verified": True,
             "created_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
         }
-        self.add_chunks([chunk])
-        logger.info("Saved verified memory item")
+        
+        self.chat_history.append(chunk)
+        self._save_chat_history()
+        self._rebuild_history_index()
+        logger.info(f"Saved verified manual memory item to centralized history for KB '{kb_name}'")
+        return True
 
     def get_chat_history(self, kb_name=None, page=1, page_size=10):
         """
