@@ -17,7 +17,7 @@ NAV_MAP = {
         "path": "/history"
     },
     "payment": {
-        "keywords": ["payment", "pay"],
+        "keywords": ["payment"],
         "path": "/payment"
     },
     # Add more pages here:

@@ -95,7 +95,6 @@ class DocumentProcessor:
         except Exception as e:
             logger.error(f"Error extracting PPTX: {e}")
             raise
-
     def extract_chunks(self, file_name, text_units, target_tokens=300, overlap_tokens=50, kb_name="General"):
         """
         Groups text units into RAG-friendly chunks using LangChain's RecursiveCharacterTextSplitter.
@@ -104,7 +103,6 @@ class DocumentProcessor:
         from langchain_text_splitters import RecursiveCharacterTextSplitter
         import time
         import uuid
-
         doc_id = file_name.replace(" ", "_").lower()
         
         # Combine all units into one full text first to allow LangChain to find optimal splits

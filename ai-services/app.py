@@ -2,6 +2,7 @@ import os
 import json
 import logging
 import time
+import asyncio
 from typing import List, Optional, Dict
 from fastapi import FastAPI, Request, File, UploadFile, Form, HTTPException, Depends, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
@@ -284,9 +285,20 @@ async def chat(request_data: ChatRequest):
             target_kb_copy = None
 
         # Process query through hybrid pipeline with specific KB
-        # ai_pipeline.process_query is synchronous, but we run it in the main thread 
-        # as it's blocking. For production, you'd use run_in_threadpool if it takes long.
-        result = ai_pipeline.process_query(message, kb_config=target_kb_copy)
+        # We use asyncio.wait_for with a strict 60s timeout.
+        # Since ai_pipeline.process_query is synchronous (with a Lock), 
+        # we run it in a threadpool using asyncio.to_thread to keep the event loop alive.
+        try:
+            result = await asyncio.wait_for(
+                asyncio.to_thread(ai_pipeline.process_query, message, kb_config=target_kb_copy),
+                timeout=60.0
+            )
+        except asyncio.TimeoutError:
+            logger.error(f"Chat request timed out after 60s for query: {message[:50]}...")
+            raise HTTPException(
+                status_code=503, 
+                detail="The system is currently overwhelmed or taking too long to respond. Please try again in a moment."
+            )
 
         logger.info(f"Intent: {result['intent']}, Context found: {result['context_found']}")
         logger.info(f"Response: {result['reply'][:100]}...")
@@ -302,6 +314,8 @@ async def chat(request_data: ChatRequest):
                 "timing_breakdown": result["timing"]
             }
         }
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Chat error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"I encountered an error processing your request: {str(e)}")

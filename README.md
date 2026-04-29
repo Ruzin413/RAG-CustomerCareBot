@@ -25,7 +25,6 @@ A premium, modular Customer Care Assistant built with a **3-Stage Hybrid RAG Pip
 ---
 
 ## 🏗️ System Architecture
-
 ```mermaid
 graph TD
     User((User)) -->|Query| API[FastAPI Backend]
