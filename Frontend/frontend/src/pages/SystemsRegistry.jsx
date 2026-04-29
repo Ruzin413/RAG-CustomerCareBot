@@ -15,6 +15,9 @@ const SystemsRegistry = () => {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [editText, setEditText] = useState('');
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newQuestion, setNewQuestion] = useState('');
+  const [newAnswer, setNewAnswer] = useState('');
 
   const fetchKBs = async () => {
     setLoading(true);
@@ -93,6 +96,40 @@ const SystemsRegistry = () => {
       fetchHistory(selectedKB, 1);
     }
   }, [selectedKB]);
+
+  const handleAddQuestion = async () => {
+    if (!newQuestion.trim() || !newAnswer.trim()) return;
+    setHistoryLoading(true);
+    try {
+      const response = await fetch('http://localhost:8001/CustomerCare/memory/add', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-API-Key': API_KEY
+        },
+        body: JSON.stringify({ 
+          question: newQuestion, 
+          answer: newAnswer, 
+          kb_name: selectedKB 
+        })
+      });
+      if (response.ok) {
+        setNewQuestion('');
+        setNewAnswer('');
+        setShowAddModal(false);
+        setStatus({ type: 'success', message: "Question added successfully!" });
+      } else {
+        const data = await response.json();
+        setStatus({ type: 'error', message: data.detail || "Failed to add question" });
+      }
+    } catch (err) {
+      console.error("Add question error:", err);
+      setStatus({ type: 'error', message: "Network error while adding question" });
+    } finally {
+      setHistoryLoading(false);
+      setTimeout(() => setStatus(null), 5000);
+    }
+  };
 
   const handleVerify = async (chunk_id, text) => {
     try {
@@ -268,9 +305,69 @@ const SystemsRegistry = () => {
                         {historyLoading ? 'Uploading...' : 'Add Files'}
                       </button>
                     </div>
+
+                    <div className="p-6 rounded-3xl bg-emerald-500/5 border border-emerald-500/20 space-y-4">
+                      <h4 className="text-emerald-400 font-bold uppercase tracking-widest text-xs">Knowledge Entry</h4>
+                      <p className="text-[11px] text-slate-500 leading-relaxed">
+                        Manually insert a specific verified Question and Answer pair into the Knowledge Base.
+                      </p>
+                      <button 
+                        onClick={() => setShowAddModal(true)}
+                        className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold transition-colors shadow-lg shadow-emerald-900/20"
+                      >
+                        Add Question
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
+
+              {/* Add Question Modal */}
+              {showAddModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-dark-950/80 backdrop-blur-sm animate-in fade-in duration-300">
+                  <div className={`${GLASS_STYLE} w-full max-w-xl p-8 rounded-3xl shadow-2xl animate-in zoom-in-95 duration-300`}>
+                    <h3 className="text-2xl font-bold text-white mb-6 uppercase tracking-wider">Add Manual Question</h3>
+                    
+                    <div className="space-y-6">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Question</label>
+                        <textarea
+                          value={newQuestion}
+                          onChange={(e) => setNewQuestion(e.target.value)}
+                          className="w-full h-24 p-4 rounded-2xl bg-dark-900/80 border border-slate-700/50 text-white text-sm focus:ring-2 focus:ring-emerald-500/50 outline-none resize-none transition-all"
+                          placeholder="Type the question here..."
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Answer</label>
+                        <textarea
+                          value={newAnswer}
+                          onChange={(e) => setNewAnswer(e.target.value)}
+                          className="w-full h-40 p-4 rounded-2xl bg-dark-900/80 border border-slate-700/50 text-white text-sm focus:ring-2 focus:ring-emerald-500/50 outline-none resize-none transition-all"
+                          placeholder="Type the verified answer here..."
+                        />
+                      </div>
+
+                      <div className="flex gap-4 pt-4">
+                        <button 
+                          onClick={handleAddQuestion}
+                          disabled={historyLoading || !newQuestion.trim() || !newAnswer.trim()}
+                          className="flex-1 py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-bold uppercase tracking-widest shadow-lg shadow-emerald-900/40 transition-all disabled:opacity-50"
+                        >
+                          {historyLoading ? 'Saving...' : 'Save to KB'}
+                        </button>
+                        <button 
+                          onClick={() => { setShowAddModal(false); setNewQuestion(''); setNewAnswer(''); }}
+                          className="px-8 py-4 bg-dark-800 text-slate-400 rounded-2xl font-bold uppercase tracking-widest hover:text-white transition-all"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {status && (
                 <div className={`p-4 rounded-2xl animate-in fade-in slide-in-from-top-4 duration-300 ${

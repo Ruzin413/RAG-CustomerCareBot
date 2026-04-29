@@ -69,6 +69,12 @@ Description: Permanently discards a chat interaction from history.
 - JSON Payload: { "chunk_id": String, "kb_name": String }
 - Response: { "status": "success", "message": String }
 
+POST /memory/add
+Description: Manually insert a verified Q/A pair into a specific system.
+- Headers: { "X-API-Key": "ft-customer-care-secret-2026" }
+- JSON Payload: { "question": String, "answer": String, "kb_name": String }
+- Response: { "status": "success", "message": String }
+
 4. Implementation Hooks (Frontend)
 ----------------------------------
 

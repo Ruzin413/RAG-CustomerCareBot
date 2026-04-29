@@ -53,6 +53,11 @@ async def verify_token(
         return True
     raise HTTPException(status_code=401, detail="Unauthorized: Invalid or missing API Token")
 
+class MemoryAddRequest(BaseModel):
+    question: str
+    answer: str
+    kb_name: str
+
 def load_kb_config():
     if os.path.exists(KB_CONFIG_FILE):
         try:
@@ -384,6 +389,30 @@ async def delete_unverified(data: DeleteUnverifiedRequest):
         raise
     except Exception as e:
         logger.error(f"Delete error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post('/memory/add', dependencies=[Depends(verify_token)])
+async def add_memory(request: MemoryAddRequest):
+    """Manually add a verified Q/A pair to a specific knowledge base"""
+    try:
+        kb_config = load_kb_config()
+        kb_name = request.kb_name
+        
+        if kb_name not in kb_config:
+            raise HTTPException(status_code=404, detail=f"KB '{kb_name}' not found")
+        
+        target = kb_config[kb_name]
+        # Switch to the correct KB index/meta files
+        if vector_store.index_path != target['binfile'] or vector_store.meta_path != target['jsonfile']:
+            logger.info(f"Switching KB to '{kb_name}' to add manual question")
+            vector_store.load_kb(target['binfile'], target['jsonfile'])
+        
+        # Save as a permanent verified memory item
+        vector_store.save_memory(request.question, request.answer)
+        
+        return {"status": "success", "message": f"Successfully added new question to '{kb_name}'"}
+    except Exception as e:
+        logger.error(f"Add memory error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get('/knowledge-bases', dependencies=[Depends(verify_token)])
