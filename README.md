@@ -73,7 +73,7 @@ The backend handles AI processing, vector storage, and document ingestion.
 2.  **Create a Virtual Environment**:
     This keeps dependencies isolated from your global Python installation.
     ```bash
-    python -m venv venv
+    python -m venv venv or py -3.14 -m venv venv (if you have multiple python versions)
     ```
 
 3.  **Activate the Virtual Environment**:

@@ -337,7 +337,7 @@ class HybridPipeline:
     "Finish the sentence in full and add a full stop (.)"
 
     "Hard rules: "
-    "1. Maximum 3 sentences. Stop after 3 sentences. "
+    "1. Maximum 4 sentences. Stop after 4 sentences. "
     "2. Never use any name, company, or fact not explicitly in the context. "
     "3. DO NOT repeat the question. "
     "4. DO NOT start with 'Based on the context' or 'As mentioned'. "
