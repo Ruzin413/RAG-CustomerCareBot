@@ -98,8 +98,6 @@ const KnowledgeBase = () => {
       setLoading(false);
     }
   };
-
-
   return (
     <div className="relative min-h-screen flex flex-col items-center p-6 bg-dark-950 overflow-x-hidden">
       {/* Background Blobs */}

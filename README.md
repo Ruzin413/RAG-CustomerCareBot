@@ -5,7 +5,7 @@
 [![FAISS](https://img.shields.io/badge/VectorDB-FAISS-00599C?logo=facebook&logoColor=white)](https://github.com/facebookresearch/faiss)
 [![LLM](https://img.shields.io/badge/LLM-Qwen2--0.5B-blue)](https://huggingface.co/Qwen/Qwen2-0.5B-Instruct)
 
-A premium, modular Customer Care Assistant built with a **3-Stage Hybrid RAG Pipeline**. This system prioritizes accuracy and groundedness by using local LLMs to generate responses strictly from your verified knowledge base.
+Next-Generation RAG Support Engine | 3-stage hybrid architecture: MobileBERT intent classification, FAISS-based semantic grounding, and Qwen2-driven self-optimization. Engineered for ultra-precise local execution featuring a professional React administrative control center.
 
 ---
 
