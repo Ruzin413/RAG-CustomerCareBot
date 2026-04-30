@@ -308,7 +308,7 @@ async def chat(request_data: ChatRequest):
             "intent": result["intent"],
             "answer": result["reply"],
             "redirect_to": result.get("redirect_to"),
-            "source": "Knowledge Base" if result["context_found"] else "Fallback (Groq)",
+            "source": "Knowledge Base" if result["context_found"] else "Fallback (Local)",
             "metadata": {
                 "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
                 "timing_breakdown": result["timing"]

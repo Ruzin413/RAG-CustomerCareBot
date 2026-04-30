@@ -23,7 +23,6 @@ NAV_MAP = {
     # Add more pages here:
     # "settings": {"keywords": ["settings", "config"], "path": "/settings"}
 }
-
 def is_navigation_intent(text: str) -> bool:
     """Check if the user input implies a navigation intent."""
     text_lower = text.lower().strip()

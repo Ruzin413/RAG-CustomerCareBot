@@ -12,9 +12,8 @@ All endpoints require a static API Key for security.
 
 1. Chat & Processing
 --------------------
-POST /process (or /chat)
-Description: Processes user queries and returns a grounded AI response or navigation command.
-- Headers: { "X-API-Key": "ft-customer-care-secret-2026" }
+POST /chat
+Description: Public chat endpoint. Processes user queries and returns a grounded AI response or navigation command.
 - JSON Payload: { "message": String, "kb_name": String }
 - Response: { 
     "status": "success", 
@@ -27,6 +26,12 @@ Description: Processes user queries and returns a grounded AI response or naviga
         "timing_breakdown": { "total_latency": String }
     }
   }
+
+POST /process
+Description: Admin-only processing endpoint (requires token). Same logic as /chat.
+- Headers: { "X-API-Key": "ft-customer-care-secret-2026" }
+- JSON Payload: { "message": String, "kb_name": String }
+- Response: Same as /chat
 
 POST /clear-cache
 Description: Manually unloads AI models from memory (RAM/VRAM). Useful for clearing resources without restarting the server.
@@ -60,6 +65,12 @@ Description: Returns a registry of all active Knowledge Systems.
 - Headers: { "X-API-Key": "ft-customer-care-secret-2026" }
 - Response: { "status": "success", "knowledge_bases": { "Name": { "jsonfile": String, "binfile": String } } }
 
+POST /knowledge-bases
+Description: Adds or updates a knowledge base configuration in the registry.
+- Headers: { "X-API-Key": "ft-customer-care-secret-2026" }
+- JSON Payload: { "name": String, "jsonfile": String, "binfile": String }
+- Response: { "status": "success", "message": String }
+
 DELETE /knowledge-bases/<name>
 Description: Completely removes a Knowledge Base system and its files (.bin and .json).
 - Headers: { "X-API-Key": "ft-customer-care-secret-2026" }
@@ -67,7 +78,7 @@ Description: Completely removes a Knowledge Base system and its files (.bin and 
 
 GET /stats
 Description: Returns the total number of chunks currently loaded in the active vector store.
-- Response: { "status": "success", "total_chunks": Integer }
+- Response: { "status": "success", "total_chunks": Integer, "message": String }
 
 3. Learning Loop (Admin)
 ------------------------
@@ -218,6 +229,19 @@ const addManualMemory = async (question, answer, kbName) => {
   return await res.json();
 };
 
+// 10. Add/Update KB Config
+const updateKBConfig = async (name, jsonfile, binfile) => {
+  const res = await fetch(`${BASE_URL}/knowledge-bases`, {
+    method: 'POST',
+    headers: { 
+      'Content-Type': 'application/json', 
+      'X-API-Key': API_KEY 
+    },
+    body: JSON.stringify({ name, jsonfile, binfile })
+  });
+  return await res.json();
+};
+
 5. Navigation Configuration (Backend Logic)
 ------------------------------------------
 The system uses a centralized map in `ai-services/navigation_utils.py` to handle redirects.
@@ -232,7 +256,7 @@ NAV_MAP = {
         "path": "/history"
     },
     "payment": {
-        "keywords": ["payment", "pay"],
+        "keywords": ["payment"],
         "path": "/payment"
     }
 }
@@ -248,9 +272,11 @@ The system enforces security via the `verify_token` dependency in `app.py`:
 
 ADMIN_TOKEN = os.getenv("ADMIN_TOKEN", "ft-customer-care-secret-2026")
 
-def verify_token(x_api_key: str = Header(None), admin_token: str = Cookie(None)):
-    # Logic: Priority to Header, fallback to Cookie
-    token = x_api_key or admin_token
-    if token != ADMIN_TOKEN:
-        raise HTTPException(status_code=401, detail="Invalid API Key")
-    return token
+async def verify_token(
+    x_api_key: Optional[str] = Header(None), 
+    admin_token: Optional[str] = Cookie(None)
+):
+    """Dependency to verify static token from header or cookie."""
+    if x_api_key == ADMIN_TOKEN or admin_token == ADMIN_TOKEN:
+        return True
+    raise HTTPException(status_code=401, detail="Unauthorized: Invalid or missing API Token")

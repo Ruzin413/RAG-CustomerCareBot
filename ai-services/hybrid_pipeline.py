@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 class HybridPipeline:
-    def __init__(self, vector_store, groq_api_key=None):
+    def __init__(self, vector_store):
         """
         Initialize the 3-stage RAG-first pipeline.
         Stage 2 uses Qwen2-0.5B-Instruct for grounded, hallucination-free generation.

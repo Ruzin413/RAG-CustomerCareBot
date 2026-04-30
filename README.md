@@ -35,7 +35,7 @@ graph TD
     
     RAG --> Search{FAISS Search}
     Search -->|Context Found| Gen[Qwen2 Grounded Gen]
-    Search -->|No Match| Fallback[Unverified Logger]
+    Search -->|No Match| Fallback[Local Fallback]
     
     Fallback --> Memory[(Unverified Memory)]
     Memory -->|Admin Verification| KB[(Verified Knowledge Base)]
@@ -48,25 +48,95 @@ graph TD
 
 ---
 
-## 🚦 Getting Started
+## 🛠️ Installation & Setup
 
-### 1. Backend Setup (ai-services)
-```bash
-cd ai-services
-python -m venv venv
-.\venv\Scripts\activate  # Windows
-pip install -r requirements.txt
-# Create .env file and set ADMIN_TOKEN
-python app.py
-```
-*Note: The first run will download ~1GB of model weights.*
+Follow these steps to set up the project on your local machine.
 
-### 2. Frontend Setup (Frontend)
-```bash
-cd Frontend/frontend
-npm install
-npm run dev
-```
+### 📋 Prerequisites
+
+Before you begin, ensure you have the following installed:
+- **Python 3.14.3**: [Download here](https://www.python.org/downloads/)
+- **Node.js (v16+) & NPM**: [Download here](https://nodejs.org/)
+- **Git**: [Download here](https://git-scm.com/)
+
+---
+
+### 1. Backend Setup (`ai-services`)
+
+The backend handles AI processing, vector storage, and document ingestion.
+
+1.  **Navigate to the backend directory**:
+    ```bash
+    cd ai-services
+    ```
+
+2.  **Create a Virtual Environment**:
+    This keeps dependencies isolated from your global Python installation.
+    ```bash
+    python -m venv venv
+    ```
+
+3.  **Activate the Virtual Environment**:
+    - **Windows**:
+      ```bash
+      .\venv\Scripts\activate
+      ```
+    - **Mac/Linux**:
+      ```bash
+      source venv/bin/activate
+      ```
+
+4.  **Install Dependencies**:
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+5.  **Configure Environment Variables**:
+    Create a file named `.env` in the `ai-services` folder and add the following:
+    ```env
+    ADMIN_TOKEN=ft-customer-care-secret-2026
+    ```
+
+6.  **Run the Backend Server**:
+    ```bash
+    python app.py
+    ```
+    > [!NOTE]
+    > On the first run, the system will download approximately **1GB** of model weights (MobileBERT, Sentence-Transformers, and Qwen2). Please ensure you have a stable internet connection.
+
+---
+
+### 2. Frontend Setup (`Frontend`)
+
+The frontend provides the user interface for chatting and administration.
+
+1.  **Open a new terminal window** (keep the backend terminal running).
+
+2.  **Navigate to the frontend directory**:
+    ```bash
+    cd Frontend/frontend
+    ```
+
+3.  **Install NPM Packages**:
+    ```bash
+    npm install
+    ```
+
+4.  **Start the Development Server**:
+    ```bash
+    npm run dev
+    ```
+
+---
+
+### 3. Verification
+
+1.  **Access the Dashboard**: Open your browser and go to `http://localhost:5173`.
+2.  **Verify Backend**: Go to `http://localhost:8001/CustomerCare/health`. You should see `{"status": "healthy", ...}`.
+3.  **Initialize Knowledge**:
+    - Navigate to the **Systems Registry** page in the UI.
+    - Upload a PDF or TXT file to the "General" system to populate the vector store.
+    - Start chatting!
 
 ---
 

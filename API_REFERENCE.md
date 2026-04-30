@@ -15,8 +15,10 @@ All endpoints require a static API Key for security.
 ## 1. Chat & Processing
 
 ### `POST /process` (or `/chat`)
-Processes user queries and returns a grounded AI response or navigation command.
-- **Headers:** `{ "X-API-Key": "ft-customer-care-secret-2026" }`
+Processes user queries using the 3-stage hybrid pipeline.
+- **Headers:** 
+  - `X-API-Key: ft-customer-care-secret-2026`
+  - `Content-Type: application/json`
 - **JSON Payload:** 
   ```json
   { 
@@ -24,86 +26,210 @@ Processes user queries and returns a grounded AI response or navigation command.
     "kb_name": "String (Optional)" 
   }
   ```
-- **Response:**
+- **Response (200 OK):**
   ```json
   { 
     "status": "success", 
-    "answer": "String", 
     "intent": "String", 
-    "redirect_to": "/path", 
-    "source": "Knowledge Base",
+    "answer": "String", 
+    "redirect_to": "/path or null", 
+    "source": "Knowledge Base | Fallback (Local)",
     "metadata": {
-        "timestamp": "2026-04-29 13:00:00",
-        "timing_breakdown": { "total_latency": "150.5ms" }
+        "timestamp": "2026-04-30 10:00:00",
+        "timing_breakdown": { 
+          "semantic_search": "45ms",
+          "reranking": "30ms",
+          "generation": "120ms",
+          "total_latency": "195ms" 
+        }
     }
   }
   ```
 
 ### `POST /clear-cache`
-Manually unloads AI models from memory (RAM/VRAM).
-- **Response:** `{ "status": "success", "message": "Memory cleared" }`
+Manually unloads AI models from memory and clears GPU cache.
+- **Headers:** None required.
+- **Response (200 OK):** 
+  ```json
+  { 
+    "status": "success", 
+    "message": "Model memory cleared and GPU cache emptied. Note: Models will re-load on the next query." 
+  }
+  ```
 
 ### `GET /health`
-Basic health check.
-- **Response:** `{ "status": "healthy", "service": "Chatbot API", "timestamp": "..." }`
+Basic health check to verify service availability.
+- **Headers:** None required.
+- **Response (200 OK):** 
+  ```json
+  { 
+    "status": "healthy", 
+    "service": "Chatbot API", 
+    "timestamp": "2026-04-30 10:00:00" 
+  }
+  ```
 
 ---
 
 ## 2. Knowledge Base Management
 
 ### `POST /upload`
-Initializes a new Knowledge Base system or adds files to an existing one.
-- **Multipart Form:** `kb_name` (String), `file` (Files), `custom_names` (JSON Array string)
-- **Response:** 
+Initializes a new Knowledge Base or adds files to an existing one.
+- **Headers:** `X-API-Key: ft-customer-care-secret-2026`
+- **Multipart Form:** 
+  - `kb_name`: "String" (Default: "General")
+  - `file`: (Files) Multiple files supported
+  - `custom_names`: (JSON Array string) Optional display names
+- **Response (200 OK):** 
   ```json
   { 
     "status": "success", 
+    "message": "Processed 2 files, 0 failed",
     "total_chunks": 150,
-    "processed_files": [{ "file": "doc.pdf", "chunks": 50, "duration": "1.2s" }],
-    "failed_files": [] 
+    "processed_files": [
+      { "file": "manual.pdf", "chunks": 120, "duration": "1.5s" }
+    ],
+    "failed_files": [],
+    "processing_stats": {
+      "total_time": "2.1s",
+      "completion_timestamp": "2026-04-30 10:05:00"
+    }
   }
   ```
 
 ### `POST /knowledge-bases/<kb_name>/append`
-Adds more documents specifically to an existing Knowledge Base.
-- **Multipart Form:** `file` (Files), `custom_names` (JSON Array string)
+Adds documents specifically to an existing Knowledge Base.
+- **Headers:** `X-API-Key: ft-customer-care-secret-2026`
+- **Multipart Form:** 
+  - `file`: (Files) Multiple files supported
+  - `custom_names`: (JSON Array string) Optional
+- **Response (200 OK):** Same structure as `/upload`.
 
 ### `GET /knowledge-bases`
 Returns a registry of all active Knowledge Systems.
-- **Response:** 
+- **Headers:** `X-API-Key: ft-customer-care-secret-2026`
+- **Response (200 OK):** 
   ```json
   { 
     "status": "success", 
     "knowledge_bases": { 
-      "General": { "jsonfile": "general_meta.json", "binfile": "general_index.bin" } 
+      "General": { "jsonfile": "general_meta.json", "binfile": "general_index.bin" },
+      "Technical": { "jsonfile": "tech_meta.json", "binfile": "tech_index.bin" }
     } 
   }
   ```
 
+### `POST /knowledge-bases`
+Manually registers or updates a Knowledge Base configuration.
+- **Headers:** 
+  - `X-API-Key: ft-customer-care-secret-2026`
+  - `Content-Type: application/json`
+- **JSON Payload:**
+  ```json
+  {
+    "name": "String",
+    "jsonfile": "String (path)",
+    "binfile": "String (path)"
+  }
+  ```
+- **Response (200 OK):** `{ "status": "success", "message": "Knowledge base 'Name' updated" }`
+
 ### `DELETE /knowledge-bases/<name>`
-Completely removes a Knowledge Base system and its files.
+Removes a Knowledge Base configuration and deletes its physical vector files.
+- **Headers:** `X-API-Key: ft-customer-care-secret-2026`
+- **Response (200 OK):** 
+  ```json
+  { "status": "success", "message": "Knowledge base 'Name' and its files have been deleted" }
+  ```
 
 ### `GET /stats`
-Returns total chunks loaded in the active vector store.
+Returns the total number of chunks currently indexed in the active vector store.
+- **Headers:** None required.
+- **Response (200 OK):** 
+  ```json
+  { 
+    "status": "success", 
+    "total_chunks": 1540, 
+    "message": "Vector store stats retrieved" 
+  }
+  ```
 
 ---
 
 ## 3. Learning Loop (Admin)
 
 ### `GET /chat-history`
-Retrieves logs from the centralized `chat_history.json`.
-- **Query Params:** `kb_name` (Optional), `page` (Int), `page_size` (Int)
-- **Response:** `{ "items": [...], "total": 50, "page": 1, "total_pages": 5 }`
+Retrieves interaction logs from `chat_history.json` with support for filtering and pagination.
+- **Headers:** `X-API-Key: ft-customer-care-secret-2026`
+- **Query Params:** 
+  - `kb_name`: "String" (Optional)
+  - `page`: Integer (Default: 1)
+  - `page_size`: Integer (Default: 10)
+- **Response (200 OK):** 
+  ```json
+  { 
+    "status": "success",
+    "items": [
+      { "chunk_id": "...", "question": "...", "answer": "...", "verified": false, "kb_name": "..." }
+    ], 
+    "total": 50, 
+    "page": 1, 
+    "total_pages": 5 
+  }
+  ```
 
 ### `POST /unverified/update`
-Edits and verifies a chat log entry.
-- **JSON Payload:** `{ "chunk_id": "String", "text": "String", "kb_name": "String" }`
+Edits and promotes an unverified chat log entry to the verified knowledge base.
+- **Headers:** 
+  - `X-API-Key: ft-customer-care-secret-2026`
+  - `Content-Type: application/json`
+- **JSON Payload:** 
+  ```json
+  { 
+    "chunk_id": "String", 
+    "text": "String (new answer)", 
+    "kb_name": "String" 
+  }
+  ```
+- **Response (200 OK):** 
+  ```json
+  { "status": "success", "message": "Item verified and moved to permanent knowledge base" }
+  ```
 
 ### `POST /unverified/delete`
-Permanently discards a chat interaction.
+Permanently discards an unverified chat interaction.
+- **Headers:** 
+  - `X-API-Key: ft-customer-care-secret-2026`
+  - `Content-Type: application/json`
+- **JSON Payload:** 
+  ```json
+  { 
+    "chunk_id": "String", 
+    "kb_name": "String (Optional)" 
+  }
+  ```
+- **Response (200 OK):** 
+  ```json
+  { "status": "success", "message": "Item deleted successfully" }
+  ```
 
 ### `POST /memory/add`
-Manually insert a pre-verified Q/A pair.
+Manually inserts a pre-verified Question/Answer pair into a specific knowledge base history.
+- **Headers:** 
+  - `X-API-Key: ft-customer-care-secret-2026`
+  - `Content-Type: application/json`
+- **JSON Payload:** 
+  ```json
+  { 
+    "question": "String", 
+    "answer": "String", 
+    "kb_name": "String" 
+  }
+  ```
+- **Response (200 OK):** 
+  ```json
+  { "status": "success", "message": "Successfully added new question to 'Name' chat history" }
+  ```
 
 ---
 
