@@ -254,8 +254,8 @@ class HybridPipeline:
         if intent not in ["faq", "support"]:
             return "", False
 
-        results = self.vector_store.search(text, top_k=5, threshold=0.60)
-        logger.info(f"Vector search returned {len(results)} potential matches (Threshold: 0.60)")
+        results = self.vector_store.search(text, top_k=5, threshold=0.65)
+        logger.info(f"Vector search returned {len(results)} potential matches (Threshold: 0.65)")
         
         if not results:
             return "", False
@@ -334,10 +334,10 @@ class HybridPipeline:
     "DO NOT include numbered list prefixes like '1.' '2.' '3.' unless explaining steps. "
     "Answer in plain natural sentences only."
     "Finish the sentence in full and add a full stop (.)"
-    "DO NOT skip crucial data/numbers/words with the use of etc"
+    "DO NOT skip crucial data with the use of etc"
 
     "Hard rules: "
-    "1. Maximum 4 sentences. Stop after 4 sentences. "
+    "1. Maximum 3 sentences. Stop after 3 sentences. "
     "2. Never use any name, company, or fact not explicitly in the context. "
     "3. DO NOT repeat the question. "
     "4. DO NOT start with 'Based on the context' or 'As mentioned'. "
