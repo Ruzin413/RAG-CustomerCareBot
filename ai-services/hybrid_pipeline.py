@@ -178,10 +178,11 @@ class HybridPipeline:
         text = text.strip('"\'')
 
         # Ensure the response ends with a full sentence
-        # (Look for the last occurrence of . ! or ?)
         if text:
             last_punc = max(text.rfind('.'), text.rfind('!'), text.rfind('?'))
-            if last_punc != -1:
+            # Only trim if the text after the last punctuation is short (< 35 chars)
+            # which indicates a likely fragmented sentence at the end.
+            if last_punc != -1 and (len(text) - last_punc) < 35:
                 text = text[:last_punc+1]
         
         return text.strip()
@@ -273,10 +274,8 @@ class HybridPipeline:
 
         # Combine texts with clear boundaries
         context_parts = [res['text'] for res in verified_results]
-        
         # Check if any chunk came from chat history
         from_history = any(res.get('source', {}).get('type') == 'chat_history' for res in verified_results)
-        
         return "\n\n".join(context_parts), from_history
 
     # ======================================================================
@@ -319,36 +318,36 @@ class HybridPipeline:
 
         # Strict system prompt — zero tolerance for hallucination
         system_prompt = (
-    "You are a precise customer care assistant. "
-    "Answer ONLY using the provided context. "
-    "If the answer is not in the context, say exactly: "
-    "'I don't have that information. Please contact our support team.' "
+            "You are a precise customer care assistant. "
+            "Answer ONLY using the provided context. "
+            "If the answer is not in the context, say exactly: "
+            "'I don't have that information. Please contact our support team.' "
 
-    "Response rules by question type: "
-    "WHAT: Give a clear factual definition or description. "
-    "HOW: Explain the process or steps. "
-    "WHERE: Identify the specific location or department. "
-    "IS/ARE: Start with Yes or No, then explain using the context. "
-    "DO NOT include source citations like [Source: filename.docx] in your answer. "
-    "DO NOT include separator lines like --- or ===. "
-    "DO NOT include numbered list prefixes like '1.' '2.' '3.' unless explaining steps. "
-    "Answer in plain natural sentences only."
-    "Finish the sentence in full and add a full stop (.)"
-    "DO NOT skip crucial data with the use of etc"
+            "Response rules by question type: "
+            "WHAT: Give a clear factual definition or description. "
+            "HOW: Explain the process or steps. "
+            "WHERE: Identify the specific location or department. "
+            "IS/ARE: Start with Yes or No, then explain using the context. "
+            "DO NOT include source citations like [Source: filename.docx] in your answer. "
+            "DO NOT include separator lines like --- or ===. "
+            "DO NOT include numbered list prefixes like '1.' '2.' '3.' unless explaining steps. "
+            "DO NOT skip crucial data, numbers, or specific words with the use of 'etc'. "
+            "Answer in plain natural sentences only. "
+            "Finish every sentence in full and always end with a period (.)."
 
-    "Hard rules: "
-    "1. Maximum 3 sentences. Stop after 3 sentences. "
-    "2. Never use any name, company, or fact not explicitly in the context. "
-    "3. DO NOT repeat the question. "
-    "4. DO NOT start with 'Based on the context' or 'As mentioned'. "
-    "5. DO NOT add greetings like Hello or Sure. "
-    "6. DO NOT generate generic customer service templates. "
+            "Hard rules: "
+            "1. Maximum 3 sentences. Stop after 3 sentences. "
+            "2. Never use any name, company, or fact not explicitly in the context. "
+            "3. DO NOT repeat the question. "
+            "4. DO NOT start with 'Based on the context' or 'As mentioned'. "
+            "5. DO NOT add greetings like Hello or Sure. "
+            "6. DO NOT generate generic customer service templates. "
 
-    "Example: "
-    "Context: Refunds take 5-7 business days via original payment method. "
-    "Question: How long do refunds take? "
-    "Answer: Refunds are processed within 5-7 business days to your original payment method."
-)
+            "Example: "
+            "Context: Refunds take 5-7 business days via original payment method. "
+            "Question: How long do refunds take? "
+            "Answer: Refunds are processed within 5-7 business days to your original payment method."
+        )
         user_message = (
             f"Context:\n{context_trimmed}\n\n"
             f"Question: {text}\n\n"
@@ -378,7 +377,7 @@ class HybridPipeline:
             with torch.no_grad():
                 outputs = self.qwen_model.generate(
                     **inputs,
-                    max_new_tokens=128,
+                    max_new_tokens=200,
                     temperature=0.1,
                     top_p=0.9,
                     repetition_penalty=1.3,
