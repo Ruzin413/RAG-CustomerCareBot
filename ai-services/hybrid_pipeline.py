@@ -255,11 +255,11 @@ class HybridPipeline:
         if intent not in ["faq", "support"]:
             return "", False
 
-        results = self.vector_store.search(text, top_k=5, threshold=0.55)
-        logger.info(f"Vector search returned {len(results)} potential matches (Threshold: 0.75)")
+        results = self.vector_store.search(text, top_k=5, threshold=0.67)
+        logger.info(f"Vector search returned {len(results)} potential matches (Threshold: 0.67)")
         
         if not results:
-            return ""
+            return "", False
 
         # Log individual matches for debugging
         for i, res in enumerate(results):
@@ -320,35 +320,19 @@ class HybridPipeline:
 
         # Strict system prompt — zero tolerance for hallucination
         system_prompt = (
-    "You are a precise customer care assistant. "
-    "Answer ONLY using the provided context. "
-    "If the answer is not in the context, say exactly: "
-    "'I don't have that information. Please contact our support team.' "
-
-    "Response rules by question type: "
-    "WHAT: Give a clear factual definition or description. "
-    "HOW: Explain the process or steps. "
-    "WHERE: Identify the specific location or department. "
-    "IS/ARE: Start with Yes or No, then explain using the context. "
-    "DO NOT include source citations like [Source: filename.docx] in your answer. "
-    "DO NOT include separator lines like --- or ===. "
-    "DO NOT include numbered list prefixes like '1.' '2.' '3.' unless explaining steps. "
-    "Answer in plain natural sentences only."
-    "Finish the sentence in full and add a full stop (.)"
-
-    "Hard rules: "
-    "1. Maximum 4 sentences. Stop after 4 sentences. "
-    "2. Never use any name, company, or fact not explicitly in the context. "
-    "3. DO NOT repeat the question. "
-    "4. DO NOT start with 'Based on the context' or 'As mentioned'. "
-    "5. DO NOT add greetings like Hello or Sure. "
-    "6. DO NOT generate generic customer service templates. "
-
-    "Example: "
-    "Context: Refunds take 5-7 business days via original payment method. "
-    "Question: How long do refunds take? "
-    "Answer: Refunds are processed within 5-7 business days to your original payment method."
-)
+            "You are a strict, grounded customer care assistant. "
+            "CRITICAL: Answer ONLY using the provided Context. "
+            "If the Context does not explicitly contain the answer to the Question, even if you know the answer from your training, you MUST say exactly: "
+            "'I'm sorry, I don't have information about that in my knowledge base.' "
+            
+            "RULES: "
+            "1. NO outside knowledge. If the context is about TourBooking and the question is about weather, you MUST fail. "
+            "2. NO hallucinations. Do not make up names, dates, or temperatures. "
+            "3. NO greetings or filler. Answer directly. "
+            "4. NO citations like [Source: ...]. "
+            "5. Maximum 3 sentences. "
+            "6. If the context is empty or irrelevant, do not attempt an answer."
+        )
         user_message = (
             f"Context:\n{context_trimmed}\n\n"
             f"Question: {text}\n\n"

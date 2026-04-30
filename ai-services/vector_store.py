@@ -223,18 +223,44 @@ class VectorStore:
             return self.metadata[0].get("kb_name")
         return None
 
-    def save_unverified_query(self, question, kb_name="General"):
-        """Log an unanswered user query for admin review in centralized chat history."""
+    def _is_duplicate(self, question, kb_name):
+        """Check if a question already exists in the history or KB for a specific kb_name."""
+        # Always reload from disk first to ensure we have manual edits made while server is running
+        if os.path.exists(self.chat_history_path):
+            try:
+                with open(self.chat_history_path, 'r', encoding='utf-8') as f:
+                    self.chat_history = json.load(f)
+            except Exception as e:
+                logger.error(f"Failed to reload chat history for sync: {e}")
+
         normalized_q = question.strip().lower()
+        target_kb = kb_name.strip().lower()
         
-        # Global duplicate check in centralized history
+        # 1. Check Chat History (scoping by kb_name, case-insensitive)
         for item in self.chat_history:
-            if item.get("kb_name") == kb_name:
-                # Check all possible question fields
+            item_kb = str(item.get("kb_name", "")).strip().lower()
+            if item_kb == target_kb:
                 q = (item.get("question") or item.get("original_question") or "").strip().lower()
                 if q == normalized_q:
-                    logger.info(f"Skipping duplicate query in centralized history: {question[:30]}...")
-                    return False
+                    return True
+        
+        # 2. Check current Knowledge Base Metadata (scoping by current loaded KB)
+        active_kb = str(self.active_kb_name() or "").strip().lower()
+        if active_kb == target_kb:
+            for item in self.metadata:
+                q_text = item.get("text", "").lower()
+                # Use a more precise check for verified metadata to avoid false positives
+                # If the exact question is a line in the text or matches closely
+                if normalized_q in q_text:
+                    return True
+                    
+        return False
+
+    def save_unverified_query(self, question, kb_name="General"):
+        """Log an unanswered user query for admin review in centralized chat history."""
+        if self._is_duplicate(question, kb_name):
+            logger.info(f"Skipping duplicate query in '{kb_name}': {question[:30]}...")
+            return False
 
         chunk = {
             "doc_id": "unverified_query",
@@ -256,17 +282,9 @@ class VectorStore:
 
     def save_interaction(self, question, answer, kb_name="General"):
         """Automatically log an AI interaction in centralized chat history."""
-        normalized_q = question.strip().lower()
-        
-        # Global duplicate check in centralized history
-        for item in self.chat_history:
-            if item.get("kb_name") == kb_name:
-                q = (item.get("question") or item.get("original_question") or "").strip().lower()
-                if q == normalized_q:
-                    logger.info(f"Skipping duplicate chat interaction in centralized history: {question[:30]}...")
-                    return False
-
-        full_text = f"Question: {question}\nAnswer: {answer}"
+        if self._is_duplicate(question, kb_name):
+            logger.info(f"Skipping duplicate chat interaction in '{kb_name}': {question[:30]}...")
+            return False
 
         chunk = {
             "doc_id": "chat_interaction",
@@ -288,17 +306,10 @@ class VectorStore:
     def save_memory(self, question, answer, kb_name="General", tags=None):
         """
         Save a verified Q/A pair as a memory item in centralized chat history.
-        Use this only when both question AND answer are known/verified.
         """
-        normalized_q = question.strip().lower()
-        
-        # Global duplicate check in centralized history
-        for item in self.chat_history:
-            if item.get("kb_name") == kb_name:
-                q = (item.get("question") or item.get("original_question") or "").strip().lower()
-                if q == normalized_q:
-                    logger.info(f"Skipping duplicate manual memory item: {question[:30]}...")
-                    return False
+        if self._is_duplicate(question, kb_name):
+            logger.info(f"Skipping duplicate manual memory item in '{kb_name}': {question[:30]}...")
+            return False
 
         if tags is None:
             tags = ["memory", "verified"]
