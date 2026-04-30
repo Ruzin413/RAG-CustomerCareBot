@@ -21,7 +21,6 @@ class HybridPipeline:
         self.lock = threading.Lock()
 
         logger.info(f"Initializing Hybrid Pipeline on {self.device}")
-
         # ------------------------------------------------------------------
         # Layer A: Intent Classification (MobileBERT) — heuristic fallback
         # ------------------------------------------------------------------

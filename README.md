@@ -138,6 +138,29 @@ The frontend provides the user interface for chatting and administration.
     - Upload a PDF or TXT file to the "General" system to populate the vector store.
     - Start chatting!
 
+
+---
+
+## 🐳 Docker Deployment (Optional)
+
+To run the backend in a containerized environment:
+
+1.  **Build the Image**:
+    ```bash
+    docker build -t rag-backend ./ai-services
+    ```
+
+2.  **Run the Container**:
+    ```bash
+    docker run -d -p 8001:8001 --env-file ./ai-services/.env --name rag-ai rag-backend
+    ```
+
+> [!TIP]
+> **Maintenance & Cleanup**: To reclaim disk space by removing unused images, containers, and build cache, run:
+> ```bash
+> docker system prune -f
+> ```
+
 ---
 
 ## 📖 API Documentation

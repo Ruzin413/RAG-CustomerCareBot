@@ -316,7 +316,6 @@ class VectorStore:
 
         # Remove 'unverified' tag if caller accidentally included it
         tags = [t for t in tags if t != "unverified"]
-
         chunk = {
             "doc_id": "memory_item",
             "chunk_id": f"memory_{int(time.time())}",
@@ -328,7 +327,6 @@ class VectorStore:
             "verified": True,
             "created_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
         }
-        
         self.chat_history.append(chunk)
         self._save_chat_history()
         self._rebuild_history_index()

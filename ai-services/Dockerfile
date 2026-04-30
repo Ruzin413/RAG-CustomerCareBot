@@ -25,7 +25,6 @@ COPY . .
 
 # Expose the port the app runs on
 EXPOSE 8001
-
 # Command to run the application
 # We use uvicorn directly to enable --reload for development
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8001", "--reload"]
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8001"]
