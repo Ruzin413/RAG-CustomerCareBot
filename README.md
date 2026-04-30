@@ -1,6 +1,6 @@
 # 🤖 RAG-First Customer Care Bot
 
-[![Python](https://img.shields.io/badge/Python-3.9+-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![Python](https://img.shields.io/badge/Python-3.14.3+-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![React](https://img.shields.io/badge/React-18.x-61DAFB?logo=react&logoColor=black)](https://reactjs.org/)
 [![FAISS](https://img.shields.io/badge/VectorDB-FAISS-00599C?logo=facebook&logoColor=white)](https://github.com/facebookresearch/faiss)
 [![LLM](https://img.shields.io/badge/LLM-Qwen2--0.5B-blue)](https://huggingface.co/Qwen/Qwen2-0.5B-Instruct)
@@ -164,5 +164,4 @@ Detailed documentation is available in **[API_REFERENCE.md](./API_REFERENCE.md)*
 4. Push to the branch.
 5. Open a Pull Request.
 ---
-## 📄 License
-Distributed under the MIT License. Developed by Rujin Manandhar.
+Developed by Rujin Manandhar.
