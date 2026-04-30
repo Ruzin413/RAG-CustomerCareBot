@@ -164,5 +164,4 @@ Detailed documentation is available in **[API_REFERENCE.md](./API_REFERENCE.md)*
 4. Push to the branch.
 5. Open a Pull Request.
 ---
-## 📄 License
-Distributed under the MIT License. Developed by Rujin Manandhar.
+Developed by Rujin Manandhar.
