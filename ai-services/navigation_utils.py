@@ -1,7 +1,7 @@
 import re
 
 # Keywords that trigger navigation intent generally
-NAVIGATE_KEYWORDS = {"go", "navigate", "take", "open", "show", "redirect"}
+NAVIGATE_KEYWORDS = { "navigate", "redirect"}
 
 # ---------------------------------------------------------
 # CENTRAL NAVIGATION MAP
