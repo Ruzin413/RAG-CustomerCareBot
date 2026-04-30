@@ -291,13 +291,13 @@ async def chat(request_data: ChatRequest):
         try:
             result = await asyncio.wait_for(
                 asyncio.to_thread(ai_pipeline.process_query, message, kb_config=target_kb_copy),
-                timeout=60.0
+                timeout=120.0
             )
         except asyncio.TimeoutError:
-            logger.error(f"Chat request timed out after 60s for query: {message[:50]}...")
+            logger.error(f"Chat request timed out after 120s for query: {message[:50]}...")
             raise HTTPException(
                 status_code=503, 
-                detail="The system is currently overwhelmed or taking too long to respond. Please try again in a moment."
+                detail="The system is taking too long to respond. This can happen with large contexts or slow hardware. Please try a shorter query."
             )
 
         logger.info(f"Intent: {result['intent']}, Context found: {result['context_found']}")
