@@ -16,20 +16,16 @@ NAV_MAP = {
     # "settings": {"keywords": ["settings", "config"], "path": "/settings"}
 }
 def is_navigation_intent(text: str) -> bool:
-    """Check if the user input implies a navigation intent."""
+    """Check if the user input implies a navigation intent.
+    Only triggers when a NAVIGATE_KEYWORD (navigate, redirect) is present."""
     text_lower = text.lower().strip()
     words = set(re.sub(r'[?!.,]', '', text_lower).split())
     
-    # Check general navigation words
-    if words & NAVIGATE_KEYWORDS:
-        return True
+    # Navigation intent REQUIRES a navigate/redirect keyword
+    if not (words & NAVIGATE_KEYWORDS):
+        return False
     
-    # Check if any specific destination keywords are mentioned
-    for config in NAV_MAP.values():
-        if any(k in text_lower for k in config["keywords"]):
-            return True
-            
-    return False
+    return True
 
 def get_navigation_destination(text: str) -> str:
     """Determine the destination page based on NAV_MAP."""
