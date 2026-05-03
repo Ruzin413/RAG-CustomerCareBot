@@ -8,7 +8,6 @@ from fastapi import FastAPI, Request, File, UploadFile, Form, HTTPException, Dep
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from dotenv import load_dotenv
-
 # Import our modular layers
 from document_processor import DocumentProcessor
 from vector_store import VectorStore

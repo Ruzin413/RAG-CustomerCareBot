@@ -6,10 +6,8 @@ import time
 import random
 import re
 from navigation_utils import is_navigation_intent, get_navigation_destination, build_navigation_reply, get_redirect_path
-
+from sentence_transformers import CrossEncoder
 logger = logging.getLogger(__name__)
-
-
 class HybridPipeline:
     def __init__(self, vector_store):
         """
@@ -39,6 +37,17 @@ class HybridPipeline:
             self.intent_tokenizer = None
 
         # ------------------------------------------------------------------
+        # Layer B: Cross-Encoder Re-ranker (Accuracy Booster)
+        # ------------------------------------------------------------------
+        self.reranker_model_name = "cross-encoder/ms-marco-MiniLM-L-6-v2"
+        try:
+            self.reranker = CrossEncoder(self.reranker_model_name, device=self.device)
+            logger.info("Cross-Encoder re-ranker loaded")
+        except Exception as e:
+            logger.warning(f"Could not load Cross-Encoder: {e}. Precision might be lower.")
+            self.reranker = None
+
+        # ------------------------------------------------------------------
         # Layer C: Qwen2-0.5B-Instruct — grounded response generation
         # ------------------------------------------------------------------
         self.qwen_model_name = "Qwen/Qwen2-0.5B-Instruct"
@@ -64,7 +73,7 @@ class HybridPipeline:
         # ------------------------------------------------------------------
         # Intent categories + stop words
         # ------------------------------------------------------------------
-        self.intents = ["greeting", "faq", "complaint", "support", "goodbye", "navigate"]
+        self.intents = ["greeting", "faq", "goodbye", "navigate"]
 
         self.stop_words = {
             "what", "is", "the", "a", "an", "how", "do", "i", "can", "you",
@@ -73,7 +82,6 @@ class HybridPipeline:
             "will", "would", "could", "should", "that", "this", "which", "with",
             "from", "by", "about", "please", "tell", "explain", "describe"
         }
-
         # ------------------------------------------------------------------
         # Templates
         # ------------------------------------------------------------------
@@ -116,6 +124,10 @@ class HybridPipeline:
                     del self.intent_model
                     self.intent_model = None
                 
+                if hasattr(self, 'reranker'):
+                    del self.reranker
+                    self.reranker = None
+                
                 # Clear torch cache
                 if torch.cuda.is_available():
                     torch.cuda.empty_cache()
@@ -134,36 +146,45 @@ class HybridPipeline:
     # ======================================================================
 
     def _clean_context(self, context: str) -> str:
-        """
-        Strip all noise symbols from PDF/doc extraction:
-        repeated dots, dashes, underscores, pipes, bullets, equals, etc.
-        """
-        # Remove 2+ repeated punctuation/symbol runs
-        clean = re.sub(r'[.\-_•|~=*#^@]{2,}', ' ', context)
-        # Remove isolated stray special characters
-        clean = re.sub(r'(?<!\w)[^\w\s,.()?!:\'"%-](?!\w)', ' ', clean)
-        # Strip non-printable / non-ASCII characters
-        clean = re.sub(r'[^\x20-\x7E\n]', '', clean)
-        # Collapse multiple spaces/tabs
-        clean = re.sub(r'[ \t]{2,}', ' ', clean)
-        # Collapse multiple blank lines
-        clean = re.sub(r'\n{3,}', '\n\n', clean)
+        """Strip citations, artifacts, and noise symbols from context."""
+        # 1. Remove citations and specific artifacts
+        context = re.sub(r'\[Source:[^\]]*\]', '', context)
+        context = re.sub(r'^\s*\d+\.\s*', '', context, flags=re.MULTILINE)
+        
+        # 2. Remove runs of repeated punctuation (e.g., ..., ---, . . .)
+        context = re.sub(r'([.\-_•|~=*#^@…])(\s*\1)+', ' ', context)
+        context = re.sub(r'\.{2,}', ' ', context)
+        
+        # 3. Junk Line Killer: Keep only lines that contain at least one letter or number
+        cleaned_lines = []
+        for line in context.splitlines():
+            if re.search(r'[a-zA-Z0-9]', line):
+                cleaned_lines.append(line)
+        
+        # 4. Final polish
+        clean = "\n".join(cleaned_lines)
+        clean = re.sub(r'[^\x20-\x7E\n]', '', clean) # ASCII only
+        clean = re.sub(r'[ \t]{2,}', ' ', clean)     # Collapse spaces
+        clean = re.sub(r'\n{3,}', '\n\n', clean)     # Collapse newlines
         return clean.strip()
 
     def _clean_generated_response(self, text: str) -> str:
-        """
-        Post-process Qwen output — remove leftover prompt fragments,
-        repeated symbols, chat template tags, and model artifacts.
-        """
-        # Remove repeated punctuation artifacts
-        text = re.sub(r'[.\-_•|~=*#^@]{2,}', ' ', text)
-        # Remove non-ASCII
-        text = re.sub(r'[^\x20-\x7E\n]', '', text)
-        # Collapse whitespace
-        text = re.sub(r'[ \t]{2,}', ' ', text)
-        text = re.sub(r'\n{3,}', '\n\n', text)
+        """Post-process AI output to remove artifacts and noise."""
+        # 1. Remove repeated punctuation artifacts
+        text = re.sub(r'([.\-_•|~=*#^@…])(\s*\1)+', ' ', text)
+        text = re.sub(r'\.{2,}', ' ', text)
+        
+        # 2. Junk Line Killer: Keep only lines that contain at least one letter or number
+        cleaned_lines = []
+        for line in text.splitlines():
+            if re.search(r'[a-zA-Z0-9]', line):
+                cleaned_lines.append(line)
+        text = "\n".join(cleaned_lines)
 
-        # Remove lines that are prompt artifacts or chat template tags
+        # 3. Convert list-style dashes/bullets at start of lines to commas for a natural sentence feel
+        text = re.sub(r'\n\s*[-•*]\s*', ', ', text)
+        
+        # 4. Remove chat template tags
         lines = text.splitlines()
         clean_lines = [
             line for line in lines
@@ -173,7 +194,6 @@ class HybridPipeline:
             ])
         ]
         text = "\n".join(clean_lines).strip()
-
         # Strip surrounding quotes
         text = text.strip('"\'')
 
@@ -212,41 +232,91 @@ class HybridPipeline:
         result = " ".join(ordered).strip()
         return result if result else sentences[0]
 
+    def _rerank_results(self, query: str, results: list) -> list:
+        """
+        Use Cross-Encoder to re-score vector search results for higher precision.
+        """
+        if not self.reranker or not results:
+            return results
+
+        # Create (Query, Chunk) pairs
+        pairs = [[query, res['text']] for res in results]
+        
+        # Predict scores
+        scores = self.reranker.predict(pairs)
+        
+        # Update scores and sort
+        for i, score in enumerate(scores):
+            results[i]['rerank_score'] = float(score)
+        
+        # Sort by rerank score descending
+        reranked = sorted(results, key=lambda x: x['rerank_score'], reverse=True)
+        
+        # Filter: Only keep results that actually relate to the query
+        # ms-marco scores > 0 are usually strong matches, < -4 are usually noise.
+        filtered = [res for res in reranked if res['rerank_score'] > -3.5]
+        
+        if not filtered and reranked:
+            logger.info(f"All {len(reranked)} matches failed reranking (Top score: {reranked[0]['rerank_score']:.2f})")
+            return []
+
+        logger.info(f"Reranking complete. Top score: {reranked[0]['rerank_score']:.2f} (Reduced {len(results)} -> {len(filtered)})")
+        return filtered
+
     # ======================================================================
     # LAYER A: Intent Classification
     # ======================================================================
 
     def classify_intent(self, text: str) -> str:
         """
-        Heuristic intent classifier. Fast and reliable.
+        Intent classifier using MobileBERT with heuristic fallback.
         """
+        # Try MobileBERT first if loaded
+        if self.intent_model and self.intent_tokenizer:
+            try:
+                inputs = self.intent_tokenizer(
+                    text,
+                    return_tensors="pt",
+                    truncation=True,
+                    max_length=128
+                ).to(self.device)
+                
+                with torch.no_grad():
+                    outputs = self.intent_model(**inputs)
+                
+                logits = outputs.logits
+                predicted_class_id = logits.argmax().item()
+                
+                # Assume mapping aligns with these 5 intents
+                labels = ["greeting", "faq", "goodbye", "navigate", "support"]
+                if predicted_class_id < len(labels):
+                    intent = labels[predicted_class_id]
+                    logger.info(f"MobileBERT classified intent as: {intent}")
+                    return intent
+            except Exception as e:
+                logger.warning(f"MobileBERT inference failed: {e}. Falling back to heuristics.")
+
+        # Fallback to heuristics
         text_lower = text.lower().strip()
         words = set(re.sub(r'[?!.,]', '', text_lower).split())
-
         greeting_words = {"hello", "hi", "hey", "greetings", "howdy", "sup"}
         if words & greeting_words or text_lower.startswith(("hi ", "hello ", "hey ")):
             return "greeting"
-
         goodbye_words = {"bye", "goodbye", "thanks", "thank", "exit", "quit", "cya", "later", "cheers"}
         if words & goodbye_words or text_lower.startswith(("bye", "thank", "thanks")):
             return "goodbye"
-
         support_words = {
             "help", "support", "problem", "issue", "error", "stuck",
             "trouble", "fix", "broken", "fail", "wrong", "cant", "cannot"
         }
         if words & support_words:
             return "support"
-
         if is_navigation_intent(text):
             return "navigate"
-
         return "faq"
-
     # ======================================================================
     # STAGE 1: RAG Retrieval
     # ======================================================================
-
     def stage1_rag_retrieve(self, text: str, intent: str) -> tuple[str, bool]:
         """
         Retrieve top-k chunks from vector store.
@@ -254,51 +324,34 @@ class HybridPipeline:
         """
         if intent not in ["faq", "support"]:
             return "", False
-
         results = self.vector_store.search(text, top_k=5, threshold=0.65)
         logger.info(f"Vector search returned {len(results)} potential matches (Threshold: 0.65)")
-        
         if not results:
             return "", False
-
         # Log individual matches for debugging
         for i, res in enumerate(results):
             logger.info(f"  Match {i+1}: Score={res.get('similarity'):.3f}, Verified={res.get('verified')}, Source={res.get('source', {}).get('file')}")
-
         # Only allow verified chunks to be used as context
         verified_results = [res for res in results if res.get('verified') is True]
         
+        # --- Stage 1.5: Re-ranking ---
+        if verified_results:
+            verified_results = self._rerank_results(text, verified_results)
+        
         if not verified_results:
-            logger.info("No verified matches found above threshold.")
-            return ""
+            logger.info("No verified matches survived reranking or were found.")
+            return "", False
 
         # Combine texts with clear boundaries
         context_parts = [res['text'] for res in verified_results]
         # Check if any chunk came from chat history
         from_history = any(res.get('source', {}).get('type') == 'chat_history' for res in verified_results)
         return "\n\n".join(context_parts), from_history
-
-    # ======================================================================
-    def _clean_context(self, context: str) -> str:
-        """Strip citations and artifacts from context for cleaner generation."""
-        # Remove [Source: ...] citations
-        clean = re.sub(r'\[Source:[^\]]*\]', '', context)
-        # Remove --- separators
-        clean = re.sub(r'-{2,}', ' ', clean)
-        # Remove numbered list artifacts like "1." "2." at start of line
-        clean = re.sub(r'^\s*\d+\.\s*', '', clean, flags=re.MULTILINE)
-        # Collapse multiple spaces
-        clean = re.sub(r'\s+', ' ', clean)
-        return clean.strip()
-
-    # ======================================================================
     # STAGE 2: Qwen2-0.5B-Instruct Grounded Generation
     # ======================================================================
-
     def stage2_grounded_generation(self, text: str, context: str) -> str:
         """
         Use Qwen2-0.5B-Instruct to generate a clean, short, grounded answer.
-
         Anti-hallucination measures applied:
           1. System prompt forbids answering outside the context
           2. Context capped at 600 chars to stay focused
@@ -311,11 +364,9 @@ class HybridPipeline:
         if self.qwen_model is None or self.qwen_tokenizer is None:
             logger.warning("Qwen2 not available. Using extractive fallback.")
             return self._extract_best_sentences(text, self._clean_context(context), top_n=2)
-
         # Clean the context (strip citations, separators, etc.)
         context_clean = self._clean_context(context)
         context_trimmed = context_clean[:2000].strip()
-
         # Strict system prompt — zero tolerance for hallucination
         system_prompt = (
             "You are a precise customer care assistant. "
@@ -333,6 +384,7 @@ class HybridPipeline:
             "DO NOT include numbered list prefixes like '1.' '2.' '3.' unless explaining steps. "
             "DO NOT skip crucial data, numbers, or specific words with the use of 'etc'. "
             "Answer in plain natural sentences only. "
+            "DO NOT use bullet points, dashes, or lists. Use commas for items instead. "
             "Finish every sentence in full and always end with a period (.)."
 
             "Hard rules: "
@@ -353,12 +405,10 @@ class HybridPipeline:
             f"Question: {text}\n\n"
             "Provide a short, clear answer using only the context above:"
         )
-
         messages = [
             {"role": "system", "content": system_prompt},
             {"role": "user",   "content": user_message}
         ]
-
         try:
             # Apply Qwen instruct chat template
             input_text = self.qwen_tokenizer.apply_chat_template(
@@ -366,14 +416,12 @@ class HybridPipeline:
                 tokenize=False,
                 add_generation_prompt=True
             )
-
             inputs = self.qwen_tokenizer(
                 input_text,
                 return_tensors="pt",
                 truncation=True,
                 max_length=1024
             ).to(self.device)
-
             with torch.no_grad():
                 outputs = self.qwen_model.generate(
                     **inputs,
@@ -385,31 +433,24 @@ class HybridPipeline:
                     pad_token_id=self.qwen_tokenizer.eos_token_id,
                     eos_token_id=self.qwen_tokenizer.eos_token_id,
                 )
-
             # Decode only the newly generated tokens (skip the prompt)
             input_length = inputs["input_ids"].shape[1]
             generated_ids = outputs[0][input_length:]
             raw_answer = self.qwen_tokenizer.decode(generated_ids, skip_special_tokens=True)
-
             # Clean up the raw output
             answer = self._clean_generated_response(raw_answer)
-
             # Validate — fall back to extractive if output is invalid
             if not answer or len(answer) < 10:
                 logger.warning("Qwen output too short or empty. Using extractive fallback.")
                 return self._extract_best_sentences(text, context, top_n=2)
-
             logger.info(f"Qwen2 generated answer ({len(answer)} chars)")
             return answer
-
         except Exception as e:
             logger.error(f"Qwen2 generation error: {e}. Using extractive fallback.")
             return self._extract_best_sentences(text, self._clean_context(context), top_n=2)
-
     # ======================================================================
     # STAGE 3: Fallback
     # ======================================================================
-
     def stage3_fallback(self, text: str, kb_name="General") -> str:
         """
         No relevant context found — log query and return polite not-found message.
@@ -420,11 +461,9 @@ class HybridPipeline:
         except Exception as e:
             logger.error(f"Error saving unverified query: {e}")
         return random.choice(self.templates["not_found"])
-
     # ======================================================================
     # MAIN PIPELINE
     # ======================================================================
-
     def process_query(self, text: str, kb_config: dict = None) -> dict:
         """
         Full 3-Stage RAG Pipeline:
@@ -434,7 +473,6 @@ class HybridPipeline:
           Stage 3 — Fallback (nothing retrieved)
         """
         start_time = time.time()
-
         with self.lock:
             # Switch Knowledge Base if needed
             if kb_config:
@@ -445,12 +483,10 @@ class HybridPipeline:
                     if self.vector_store.index_path != bin_file or self.vector_store.meta_path != json_file:
                         logger.info(f"Switching knowledge base to: {bin_file}")
                         self.vector_store.load_kb(bin_file, json_file)
-
             # --- Stage 0: Intent ---
             t0 = time.time()
             intent = self.classify_intent(text)
             logger.info(f"Stage 0: Intent = '{intent}' ({(time.time()-t0)*1000:.1f}ms)")
-
             # --- Quick-exit intents (no RAG needed) ---
             if intent == "greeting":
                 return self._build_response(
@@ -458,14 +494,12 @@ class HybridPipeline:
                     random.choice(self.templates["greeting"]),
                     start_time
                 )
-
             if intent == "goodbye":
                 return self._build_response(
                     intent, True,
                     random.choice(self.templates["goodbye"]),
                     start_time
                 )
-
             if intent == "navigate":
                 dest = get_navigation_destination(text)
                 if dest:
@@ -503,11 +537,9 @@ class HybridPipeline:
                 kb_name = kb_config.get('kb_name', 'General') if kb_config else 'General'
                 reply = self.stage3_fallback(text, kb_name=kb_name)
                 return self._build_response(intent, False, reply, start_time)
-
     # ======================================================================
     # HELPER
     # ======================================================================
-
     def _build_response(
         self,
         intent: str,
