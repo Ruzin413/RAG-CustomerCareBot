@@ -5,7 +5,7 @@
 [![FAISS](https://img.shields.io/badge/VectorDB-FAISS-00599C?logo=facebook&logoColor=white)](https://github.com/facebookresearch/faiss)
 [![LLM](https://img.shields.io/badge/LLM-Qwen2--0.5B-blue)](https://huggingface.co/Qwen/Qwen2-0.5B-Instruct)
 
-Next-Generation RAG Support Engine | 3-stage hybrid architecture: MobileBERT intent classification, FAISS-based semantic grounding, and Qwen2-driven self-optimization. Engineered for ultra-precise local execution featuring a professional React administrative control center.
+Next-Generation RAG Support Engine | 3-stage hybrid architecture: intent classification, FAISS-based semantic grounding, and Qwen2-driven self-optimization. Engineered for ultra-precise local execution featuring a professional React administrative control center.
 
 ---
 
@@ -14,7 +14,7 @@ Next-Generation RAG Support Engine | 3-stage hybrid architecture: MobileBERT int
 - **🌐 System-Specific Knowledge**: Isolated knowledge bases for different departments or products (e.g., eHAJIRI, TourBooking).
 - **📄 Multi-Format Ingestion**: Batch process PDFs, DOCX, PPTX, and TXT files directly into high-performance vector stores.
 - **🧠 3-Stage Hybrid Architecture**:
-    - **Stage 0 (Intent)**: Real-time classification (Greeting, FAQ, Support, Goodbye, Navigate) using **MobileBERT**.
+    - **Stage 0 (Intent)**: Real-time classification (Greeting, FAQ, Support, Goodbye, Navigate).
     - **Stage 1 (Retrieve)**: Semantic search via FAISS & Sentence-Transformers with citation scrubbing.
     - **Stage 2 (Grounded Gen)**: LLM responses powered by **Qwen2-0.5B-Instruct**, strictly anchored to your documents.
     - **Stage 3 (Fallback)**: Graceful fallback with "unverified memory" logging when no relevant context is found.
@@ -28,7 +28,7 @@ Next-Generation RAG Support Engine | 3-stage hybrid architecture: MobileBERT int
 ```mermaid
 graph TD
     User((User)) -->|Query| API[FastAPI Backend]
-    API --> Intent{MobileBERT Intent}
+    API --> Intent{Intent}
     Intent -->|Greeting/Goodbye| Template[Template Engine]
     Intent -->|Navigate| Redirect[Router Redirect]
     Intent -->|FAQ/Support| RAG[RAG Pipeline]
@@ -102,7 +102,7 @@ The backend handles AI processing, vector storage, and document ingestion.
     python app.py
     ```
     > [!NOTE]
-    > On the first run, the system will download approximately **1GB** of model weights (MobileBERT, Sentence-Transformers, and Qwen2). Please ensure you have a stable internet connection.
+    > On the first run, the system will download approximately **1GB** of model weights (Sentence-Transformers and Qwen2). Please ensure you have a stable internet connection.
 
 ---
 

@@ -146,7 +146,6 @@ Returns a registry of all active Knowledge Systems.
     } 
   }
   ```
-
 ### `POST /knowledge-bases`
 Manually registers or updates a Knowledge Base configuration.
 - **Headers:** 
@@ -215,7 +214,7 @@ Edits and promotes an unverified chat log entry to the verified knowledge base.
   { 
     "chunk_id": "String", 
     "text": "String (new answer)", 
-    "kb_name": "String (Optional)" 
+    "kb_name": "String " 
   }
   ```
 - **Response (200 OK):** 
@@ -232,7 +231,7 @@ Permanently discards an unverified chat interaction.
   ```json
   { 
     "chunk_id": "String", 
-    "kb_name": "String (Optional)" 
+    "kb_name": "String " 
   }
   ```
 - **Response (200 OK):** 

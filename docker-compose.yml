@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./ai-services
+      dockerfile: Dockerfile
+    container_name: rag-ai-backend
+    ports:
+      - "8001:8001"
+    env_file:
+      - ./ai-services/.env
+    volumes:
+      - ./ai-services/data:/app/data
+    restart: unless-stopped
+    networks:
+      - rag-network
+
+  frontend:
+    build:
+      context: ./Frontend/frontend
+      dockerfile: Dockerfile
+    container_name: rag-ui-frontend
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - rag-network
+
+networks:
+  rag-network:
+    driver: bridge
