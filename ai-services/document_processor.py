@@ -83,7 +83,8 @@ class DocumentProcessor:
                         slide_content.append(shape.text.strip())
                 
                 if slide_content:
-                    text = "\n".join(slide_content)
+                    # Join slide fragments into readable sentences to avoid noisy label-dump chunks
+                    text = ". ".join(slide_content) + "."
                     slides_text.append(text)
                 
                 if (i + 1) % 10 == 0:
@@ -105,35 +106,33 @@ class DocumentProcessor:
         import uuid
         doc_id = file_name.replace(" ", "_").lower()
         
-        # Combine all units into one full text first to allow LangChain to find optimal splits
-        full_text = "\n\n".join(text_units)
-
         logger.info(f"Starting LangChain chunking for {file_name} (Chunk Size: 500 chars)...")
 
         # Initialize RecursiveCharacterTextSplitter
         # tries paragraph → line → sentence → word
         text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=500,
-            chunk_overlap=50,
+            chunk_overlap=15,
             separators=["\n\n", "\n", ". ", " "]
         )
 
-        # Split the text
-        split_texts = text_splitter.split_text(full_text)
-
         chunks = []
-        for i, text in enumerate(split_texts):
-            chunks.append({
-                "doc_id": doc_id,
-                "chunk_id": f"{doc_id}#{i:03d}",
-                "kb_name": kb_name,
-                "source": {"file": file_name},
-                "text": text,
-                "tags": [],
-                "verified": True,
-                "created_at": time.strftime("%Y-%m-%dT%H:%M:%S")
-            })
+        global_chunk_idx = 0
+        # Process each text unit (page/slide/paragraph) individually to preserve structure boundaries
+        for unit_idx, unit_text in enumerate(text_units):
+            split_texts = text_splitter.split_text(unit_text)
+            for text in split_texts:
+                chunks.append({
+                    "doc_id": doc_id,
+                    "chunk_id": f"{doc_id}#{global_chunk_idx:03d}",
+                    "kb_name": kb_name,
+                    "source": {"file": file_name, "unit_index": unit_idx + 1},
+                    "text": text,
+                    "tags": [],
+                    "verified": True,
+                    "created_at": time.strftime("%Y-%m-%dT%H:%M:%S")
+                })
+                global_chunk_idx += 1
 
         logger.info(f"LangChain chunking complete. Generated {len(chunks)} context-aware chunks.")
-        return chunks
         return chunks

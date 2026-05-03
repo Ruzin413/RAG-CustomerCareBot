@@ -20,21 +20,10 @@ class HybridPipeline:
 
         logger.info(f"Initializing Hybrid Pipeline on {self.device}")
         # ------------------------------------------------------------------
-        # Layer A: Intent Classification (MobileBERT) — heuristic fallback
+        # Layer A: Intent Classification — heuristics only
         # ------------------------------------------------------------------
-        self.intent_model_name = "google/mobilebert-uncased"
-        try:
-            self.intent_tokenizer = AutoTokenizer.from_pretrained(self.intent_model_name)
-            self.intent_model = AutoModelForSequenceClassification.from_pretrained(
-                self.intent_model_name,
-                num_labels=5,
-                low_cpu_mem_usage=True
-            ).to(self.device)
-            logger.info("MobileBERT intent classifier loaded")
-        except Exception as e:
-            logger.warning(f"Could not load MobileBERT: {e}. Using heuristics only.")
-            self.intent_model = None
-            self.intent_tokenizer = None
+        self.intent_model = None
+        logger.info("Using heuristics only for intent classification.")
 
         # ------------------------------------------------------------------
         # Layer B: Cross-Encoder Re-ranker (Accuracy Booster)
@@ -73,7 +62,7 @@ class HybridPipeline:
         # ------------------------------------------------------------------
         # Intent categories + stop words
         # ------------------------------------------------------------------
-        self.intents = ["greeting", "faq", "goodbye", "navigate"]
+        self.intent_labels = ["greeting", "faq", "goodbye", "navigate"]
 
         self.stop_words = {
             "what", "is", "the", "a", "an", "how", "do", "i", "can", "you",
@@ -140,7 +129,6 @@ class HybridPipeline:
             except Exception as e:
                 logger.error(f"Cleanup error: {e}")
                 return False
-
     # ======================================================================
     # UTILITIES
     # ======================================================================
@@ -200,10 +188,14 @@ class HybridPipeline:
         # Ensure the response ends with a full sentence
         if text:
             last_punc = max(text.rfind('.'), text.rfind('!'), text.rfind('?'))
-            # Only trim if the text after the last punctuation is short (< 35 chars)
-            # which indicates a likely fragmented sentence at the end.
-            if last_punc != -1 and (len(text) - last_punc) < 35:
+            # Force trim at the last punctuation to prevent cut-off fragment sentences
+            if last_punc != -1:
                 text = text[:last_punc+1]
+        
+        # Hard cap at 3 sentences
+        sentences = re.split(r'(?<=[.!?])\s+', text.strip())
+        sentences = [s for s in sentences if s.strip()]
+        text = " ".join(sentences[:3])
         
         return text.strip()
 
@@ -254,7 +246,8 @@ class HybridPipeline:
         
         # Filter: Only keep results that actually relate to the query
         # ms-marco scores > 0 are usually strong matches, < -4 are usually noise.
-        filtered = [res for res in reranked if res['rerank_score'] > -3.5]
+        # Relaxing threshold to -10.0 to return more answers
+        filtered = [res for res in reranked if res['rerank_score'] > -10.0]
         
         if not filtered and reranked:
             logger.info(f"All {len(reranked)} matches failed reranking (Top score: {reranked[0]['rerank_score']:.2f})")
@@ -269,33 +262,8 @@ class HybridPipeline:
 
     def classify_intent(self, text: str) -> str:
         """
-        Intent classifier using MobileBERT with heuristic fallback.
+        Intent classifier using heuristics only.
         """
-        # Try MobileBERT first if loaded
-        if self.intent_model and self.intent_tokenizer:
-            try:
-                inputs = self.intent_tokenizer(
-                    text,
-                    return_tensors="pt",
-                    truncation=True,
-                    max_length=128
-                ).to(self.device)
-                
-                with torch.no_grad():
-                    outputs = self.intent_model(**inputs)
-                
-                logits = outputs.logits
-                predicted_class_id = logits.argmax().item()
-                
-                # Assume mapping aligns with these 5 intents
-                labels = ["greeting", "faq", "goodbye", "navigate", "support"]
-                if predicted_class_id < len(labels):
-                    intent = labels[predicted_class_id]
-                    logger.info(f"MobileBERT classified intent as: {intent}")
-                    return intent
-            except Exception as e:
-                logger.warning(f"MobileBERT inference failed: {e}. Falling back to heuristics.")
-
         # Fallback to heuristics
         text_lower = text.lower().strip()
         words = set(re.sub(r'[?!.,]', '', text_lower).split())
@@ -305,12 +273,6 @@ class HybridPipeline:
         goodbye_words = {"bye", "goodbye", "thanks", "thank", "exit", "quit", "cya", "later", "cheers"}
         if words & goodbye_words or text_lower.startswith(("bye", "thank", "thanks")):
             return "goodbye"
-        support_words = {
-            "help", "support", "problem", "issue", "error", "stuck",
-            "trouble", "fix", "broken", "fail", "wrong", "cant", "cannot"
-        }
-        if words & support_words:
-            return "support"
         if is_navigation_intent(text):
             return "navigate"
         return "faq"
@@ -324,8 +286,8 @@ class HybridPipeline:
         """
         if intent not in ["faq", "support"]:
             return "", False
-        results = self.vector_store.search(text, top_k=5, threshold=0.65)
-        logger.info(f"Vector search returned {len(results)} potential matches (Threshold: 0.65)")
+        results = self.vector_store.search(text, top_k=6, threshold=0.40)
+        logger.info(f"Vector search returned {len(results)} potential matches (Threshold: 0.40)")
         if not results:
             return "", False
         # Log individual matches for debugging
@@ -366,40 +328,36 @@ class HybridPipeline:
             return self._extract_best_sentences(text, self._clean_context(context), top_n=2)
         # Clean the context (strip citations, separators, etc.)
         context_clean = self._clean_context(context)
-        context_trimmed = context_clean[:2000].strip()
+        context_trimmed = context_clean[:900].strip()
         # Strict system prompt — zero tolerance for hallucination
         system_prompt = (
-            "You are a precise customer care assistant. "
-            "Answer ONLY using the provided context. "
-            "If the answer is not in the context, say exactly: "
-            "'I don't have that information. Please contact our support team.' "
+    "You are a precise customer care assistant. "
+    "Answer ONLY using the provided context. "
+    "If the answer is not in the context, say exactly: "
+    "'I don't have that information. Please contact our support team.' "
 
-            "Response rules by question type: "
-            "WHAT: Give a clear factual definition or description. "
-            "HOW: Explain the process or steps. "
-            "WHERE: Identify the specific location or department. "
-            "IS/ARE: Start with Yes or No, then explain using the context. "
-            "DO NOT include source citations like [Source: filename.docx] in your answer. "
-            "DO NOT include separator lines like --- or ===. "
-            "DO NOT include numbered list prefixes like '1.' '2.' '3.' unless explaining steps. "
-            "DO NOT skip crucial data, numbers, or specific words with the use of 'etc'. "
-            "Answer in plain natural sentences only. "
-            "DO NOT use bullet points, dashes, or lists. Use commas for items instead. "
-            "Finish every sentence in full and always end with a period (.)."
+    "Rules: "
+    "1. Always write 2 to 3 complete sentences. Never answer in less than 2 sentences. "
+    "2. If the context only supports one fact, expand by restating who it applies to or when. "
+    "3. Maximum 3 sentences. Pack all details into as few sentences as possible. "
+    "4. When listing items, use commas inline: 'Face, Fingerprint, Palm, and Card.' "
+    "5. Never use 'etc' — always list every item explicitly from the context. "
+    "6. Include all specific values, numbers, and names from the context. Never generalize. "
+    "7. End every sentence with a period(.). "
+    "8. Do NOT repeat the question, add greetings, or use bullet points. "
+    "9. Do NOT start with 'Based on the context' or 'As mentioned'. "
+    "10. Never state facts not explicitly in the context. "
 
-            "Hard rules: "
-            "1. Maximum 3 sentences. Stop after 3 sentences. "
-            "2. Never use any name, company, or fact not explicitly in the context. "
-            "3. DO NOT repeat the question. "
-            "4. DO NOT start with 'Based on the context' or 'As mentioned'. "
-            "5. DO NOT add greetings like Hello or Sure. "
-            "6. DO NOT generate generic customer service templates. "
+    "Example 1 — simple answer: "
+    "Context: Refunds take 5-7 business days via original payment method. "
+    "Question: How long do refunds take? "
+    "Answer: Refunds are processed within 5-7 business days to your original payment method. "
 
-            "Example: "
-            "Context: Refunds take 5-7 business days via original payment method. "
-            "Question: How long do refunds take? "
-            "Answer: Refunds are processed within 5-7 business days to your original payment method."
-        )
+    "Example 2 — specific details: "
+    "Context: Biometric support includes Face, Fingerprint, Palm, and Card readers. "
+    "Question: What biometric devices are supported? "
+    "Answer: The system supports Face, Fingerprint, Palm, and Card biometric devices."
+)
         user_message = (
             f"Context:\n{context_trimmed}\n\n"
             f"Question: {text}\n\n"
@@ -425,11 +383,10 @@ class HybridPipeline:
             with torch.no_grad():
                 outputs = self.qwen_model.generate(
                     **inputs,
+                    min_new_tokens=40,
                     max_new_tokens=200,
-                    temperature=0.1,
-                    top_p=0.9,
-                    repetition_penalty=1.3,
-                    do_sample=True,
+                    repetition_penalty=1.05,
+                    do_sample=False,
                     pad_token_id=self.qwen_tokenizer.eos_token_id,
                     eos_token_id=self.qwen_tokenizer.eos_token_id,
                 )
@@ -440,9 +397,14 @@ class HybridPipeline:
             # Clean up the raw output
             answer = self._clean_generated_response(raw_answer)
             # Validate — fall back to extractive if output is invalid
-            if not answer or len(answer) < 10:
+            if not answer or len(answer) < 60:
                 logger.warning("Qwen output too short or empty. Using extractive fallback.")
-                return self._extract_best_sentences(text, context, top_n=2)
+                extractive = self._extract_best_sentences(text, context, top_n=2)
+                # Combine both if Qwen gave something
+                if answer and len(answer) >= 10:
+                    answer = answer + " " + extractive
+                else:
+                    answer = extractive
             logger.info(f"Qwen2 generated answer ({len(answer)} chars)")
             return answer
         except Exception as e:
@@ -473,6 +435,8 @@ class HybridPipeline:
           Stage 3 — Fallback (nothing retrieved)
         """
         start_time = time.time()
+        interaction_to_save = None
+        
         with self.lock:
             # Switch Knowledge Base if needed
             if kb_config:
@@ -520,23 +484,28 @@ class HybridPipeline:
                 reply = self.stage2_grounded_generation(text, context)
                 
                 # Auto-log interaction as unverified for future learning
-                # SKIP logging if the answer was already sourced from chat history to avoid redundancy
                 if not from_history:
-                    try:
-                        kb_name = kb_config.get('kb_name', 'General') if kb_config else 'General'
-                        self.vector_store.save_interaction(text, reply, kb_name=kb_name)
-                    except Exception as e:
-                        logger.error(f"Error logging interaction: {e}")
+                    kb_name = kb_config.get('kb_name', 'General') if kb_config else 'General'
+                    interaction_to_save = (text, reply, kb_name)
                 else:
                     logger.info("Skipping auto-log: Context sourced from existing chat history.")
                 
-                return self._build_response(intent, True, reply, start_time)
+                response = self._build_response(intent, True, reply, start_time)
             else:
                 # --- Stage 3: Fallback ---
                 logger.info("Stage 3: No context found. Using fallback...")
                 kb_name = kb_config.get('kb_name', 'General') if kb_config else 'General'
                 reply = self.stage3_fallback(text, kb_name=kb_name)
-                return self._build_response(intent, False, reply, start_time)
+                response = self._build_response(intent, False, reply, start_time)
+        
+        # DB write happens after lock is released
+        if interaction_to_save:
+            try:
+                self.vector_store.save_interaction(*interaction_to_save)
+            except Exception as e:
+                logger.error(f"Error logging interaction: {e}")
+                
+        return response
     # ======================================================================
     # HELPER
     # ======================================================================

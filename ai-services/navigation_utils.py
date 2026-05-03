@@ -11,15 +11,7 @@ NAV_MAP = {
     "report": {
         "keywords": ["report"],
         "path": "/report"
-    },
-    "history": {
-        "keywords": ["history"],
-        "path": "/history"
-    },
-    "payment": {
-        "keywords": ["payment"],
-        "path": "/payment"
-    },
+    }
     # Add more pages here:
     # "settings": {"keywords": ["settings", "config"], "path": "/settings"}
 }

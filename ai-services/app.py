@@ -58,6 +58,9 @@ class MemoryAddRequest(BaseModel):
     answer: str
     kb_name: str
 
+class LoginRequest(BaseModel):
+    token: str
+
 def load_kb_config():
     if os.path.exists(KB_CONFIG_FILE):
         try:
@@ -196,6 +199,13 @@ async def process_and_add_files(kb_name, uploaded_files: List[UploadFile], custo
     }
 
 # API Endpoints
+
+@router.post('/login')
+async def login(request: LoginRequest):
+    """Verify admin token and return user role"""
+    if request.token == ADMIN_TOKEN:
+        return {"status": "success", "role": "admin", "token": ADMIN_TOKEN}
+    raise HTTPException(status_code=401, detail="Invalid admin token")
 
 @router.post('/upload', dependencies=[Depends(verify_token)])
 async def upload_document(
@@ -505,4 +515,4 @@ if __name__ == '__main__':
     import uvicorn
     logger.info("Starting 3-Stage RAG CustomerCare API Server (FastAPI)...")
     logger.info("="*60)
-    uvicorn.run(app, host='0.0.0.0', port=8001)
+    uvicorn.run("app:app", host='0.0.0.0', port=8001, workers=1)

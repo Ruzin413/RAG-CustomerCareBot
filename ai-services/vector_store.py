@@ -186,7 +186,8 @@ class VectorStore:
                 history_hits = [h for h in history_hits if h.get("kb_name") == kb_name]
             
             for h in history_hits:
-                h["similarity"] += 0.10  # Priority Boost for human-verified answers
+                if h.get("verified") is True:
+                    h["similarity"] += 0.10  # Priority Boost for human-verified answers
             
             results.extend(history_hits)
 
@@ -202,7 +203,7 @@ class VectorStore:
         results = []
         for dist, idx in zip(distances[0], indices[0]):
             if idx == -1: continue
-            sim_score = 1.0 - (dist / 4.0)
+            sim_score = 1.0 - (dist / 2.0)
             if sim_score >= threshold:
                 if idx < len(metadata):
                     chunk = metadata[idx].copy()
@@ -250,8 +251,8 @@ class VectorStore:
             for item in self.metadata:
                 q_text = item.get("text", "").lower()
                 # Use a more precise check for verified metadata to avoid false positives
-                # If the exact question is a line in the text or matches closely
-                if normalized_q in q_text:
+                # Match the exact question rather than checking if it exists as a substring
+                if normalized_q == q_text.strip():
                     return True
                     
         return False

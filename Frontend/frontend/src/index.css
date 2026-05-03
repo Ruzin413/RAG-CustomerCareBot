@@ -13,31 +13,27 @@
   --color-primary-900: #1e3a8a;
   --color-primary-950: #172554;
 
-  --color-dark-50: #f8fafc;
-  --color-dark-100: #f1f5f9;
-  --color-dark-200: #e2e8f0;
-  --color-dark-300: #cbd5e1;
-  --color-dark-400: #94a3b8;
-  --color-dark-500: #64748b;
-  --color-dark-600: #475569;
-  --color-dark-700: #334155;
-  --color-dark-800: #1e293b;
-  --color-dark-900: #0f172a;
-  --color-dark-950: #020617;
+  --color-surface-50: #ffffff;
+  --color-surface-100: #f9fafb;
+  --color-surface-200: #f3f4f6;
+  --color-surface-300: #e5e7eb;
+  --color-surface-400: #d1d5db;
+  --color-surface-500: #9ca3af;
+  --color-surface-600: #4b5563;
+  --color-surface-700: #374151;
+  --color-surface-800: #1f2937;
+  --color-surface-900: #111827;
 
   @keyframes blob {
     0% {
       transform: translate(0px, 0px) scale(1);
     }
-
     33% {
       transform: translate(30px, -50px) scale(1.1);
     }
-
     66% {
       transform: translate(-20px, 20px) scale(0.9);
     }
-
     100% {
       transform: translate(0px, 0px) scale(1);
     }
@@ -56,26 +52,36 @@
 
 @layer base {
   body {
-    @apply bg-dark-950 text-slate-200 selection:bg-primary-500/30;
+    @apply bg-surface-100 text-surface-900 selection:bg-primary-500/20;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }
 
 @layer components {
-  .glass {
-    @apply bg-dark-900/40 backdrop-blur-xl border border-slate-700/50 shadow-2xl;
+  .card-white {
+    @apply bg-white border border-surface-300 shadow-sm rounded-3xl;
   }
 
   .chat-bubble-user {
-    @apply bg-gradient-to-br from-primary-600 to-indigo-600 text-white rounded-2xl rounded-tr-none py-3 px-5 shadow-lg shadow-primary-900/20 max-w-[85%] self-end;
+    @apply bg-primary-600 text-white rounded-2xl rounded-tr-none py-3 px-5 shadow-sm max-w-[85%] self-end;
   }
 
   .chat-bubble-bot {
-    @apply bg-dark-800/80 border border-slate-700/50 text-slate-100 rounded-2xl rounded-tl-none py-3 px-5 shadow-xl max-w-[85%] self-start;
+    @apply bg-white border border-surface-300 text-surface-800 rounded-2xl rounded-tl-none py-3 px-5 shadow-sm max-w-[85%] self-start;
   }
 
   .chat-bubble-fallback {
-    @apply bg-amber-500/5 border border-amber-500/30 text-slate-100 rounded-2xl rounded-tl-none py-3 px-5 shadow-xl max-w-[85%] self-start;
+    @apply bg-amber-50 border border-amber-200 text-amber-900 rounded-2xl rounded-tl-none py-3 px-5 shadow-sm max-w-[85%] self-start;
+  }
+
+  .btn-primary {
+    @apply bg-primary-600 hover:bg-primary-700 text-white font-semibold py-2 px-6 rounded-xl transition-all duration-200 active:scale-[0.98] shadow-sm;
+  }
+
+  .input-field {
+    @apply bg-surface-50 border border-surface-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all placeholder:text-surface-400 text-surface-900;
   }
 
   .scrollbar-hide::-webkit-scrollbar {

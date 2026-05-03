@@ -1,13 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../apiConfig';
 
-const GLASS_STYLE = "bg-dark-800/50 backdrop-blur-xl border border-slate-700/50 shadow-2xl";
-const GRADIENT_TEXT = "bg-clip-text text-transparent bg-gradient-to-r from-primary-400 to-fuchsia-400 font-extrabold";
-const UPLOAD_CARD = `${GLASS_STYLE} rounded-3xl p-10 transition-all duration-500 hover:border-primary-500/50 hover:shadow-primary-500/10 cursor-pointer group`;
-const API_KEY = "ft-customer-care-secret-2026";
-
-const KnowledgeBase = () => {
-  const navigate = useNavigate();
+const KnowledgeBase = ({ token }) => {
+  const API_KEY = token || "ft-customer-care-secret-2026";
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState(null);
@@ -16,11 +12,12 @@ const KnowledgeBase = () => {
   const [kbName, setKbName] = useState("");
   const [kbJsonFile, setKbJsonFile] = useState("");
   const [kbBinFile, setKbBinFile] = useState("");
-  const [fileNames, setFileNames] = useState({}); // Mapping of index to custom name
+  const [fileNames, setFileNames] = useState({});
   const fileInputRef = useRef(null);
+
   const fetchKBs = async () => {
     try {
-      const response = await fetch('http://localhost:8001/CustomerCare/knowledge-bases', {
+      const response = await fetch(`${API_BASE_URL}/knowledge-bases`, {
         headers: { 'X-API-Key': API_KEY }
       });
       if (response.ok) {
@@ -31,9 +28,11 @@ const KnowledgeBase = () => {
       console.error("Failed to fetch KBs:", err);
     }
   };
+
   useEffect(() => {
     fetchKBs();
   }, []);
+
   const handleFileChange = (e) => {
     const selectedFiles = Array.from(e.target.files);
     if (selectedFiles.length > 0) {
@@ -49,10 +48,11 @@ const KnowledgeBase = () => {
   };
 
   const removeFile = (index) => {
-    setFiles(prev => prev.filter((_, i) => i !== index));
+    const updatedFiles = files.filter((_, i) => i !== index);
+    setFiles(updatedFiles);
     const newNames = {};
-    files.filter((_, i) => i !== index).forEach((f, i) => {
-      newNames[i] = fileNames[i < index ? i : i + 1];
+    updatedFiles.forEach((f, i) => {
+      newNames[i] = i < index ? fileNames[i] : fileNames[i + 1];
     });
     setFileNames(newNames);
   };
@@ -72,7 +72,7 @@ const KnowledgeBase = () => {
     formData.append('binfile', kbBinFile);
 
     try {
-      const response = await fetch('http://localhost:8001/CustomerCare/upload', {
+      const response = await fetch(`${API_BASE_URL}/upload`, {
         method: 'POST',
         headers: { 'X-API-Key': API_KEY },
         body: formData,
@@ -83,7 +83,6 @@ const KnowledgeBase = () => {
         setStatus({
           success: true,
           message: result.message || "Knowledge base updated successfully!",
-          data: result,
           type: "success"
         });
         setFiles([]);
@@ -98,50 +97,25 @@ const KnowledgeBase = () => {
       setLoading(false);
     }
   };
+
   return (
-    <div className="relative min-h-screen flex flex-col items-center p-6 bg-dark-950 overflow-x-hidden">
-      {/* Background Blobs */}
-      <div className="absolute top-0 -left-4 w-72 h-72 bg-primary-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob"></div>
-      <div className="absolute top-0 -right-4 w-72 h-72 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob animation-delay-2000"></div>
+    <div className="space-y-8 animate-in fade-in duration-500">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-2">
+        <div>
+          <h2 className="text-2xl font-bold text-surface-900 tracking-tight">Knowledge Ingestion</h2>
+          <p className="text-surface-500 text-sm">Upload documents to build your AI knowledge base.</p>
+        </div>
+      </div>
 
-      <div className="container max-w-4xl relative z-10 flex flex-col items-center">
-        <header className="text-center mb-12">
-          <h1 className={`text-4xl md:text-5xl mb-4 tracking-tight ${GRADIENT_TEXT}`}>
-            FT Customer Care Bot
-          </h1>
-
-          <div className="flex bg-dark-800/80 p-1.5 rounded-2xl border border-slate-700/50 shadow-lg backdrop-blur-md">
-            <button
-              onClick={() => navigate('/')}
-              className="px-8 py-2.5 rounded-xl font-bold text-sm text-slate-400 hover:text-slate-200 transition-all duration-300"
-            >
-              Chat Interface
-            </button>
-            <button
-              className="px-8 py-2.5 rounded-xl font-bold text-sm bg-primary-600 text-white shadow-lg"
-            >
-              Knowledge Base
-            </button>
-            <button
-              onClick={() => navigate('/systems')}
-              className="px-8 py-2.5 rounded-xl font-bold text-sm text-slate-400 hover:text-slate-200 transition-all duration-300"
-            >
-              Manage Systems
-            </button>
-          </div>
-        </header>
-
-        <main className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-          {/* KB Configuration */}
-          <div className={`${GLASS_STYLE} rounded-3xl p-8 mb-8`}>
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-1.5 h-6 bg-primary-500 rounded-full"></div>
-              <h3 className="text-xl font-bold text-white uppercase tracking-wider">Target System Configuration</h3>
-            </div>
-
-            <div className="space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Left Col: Config */}
+        <div className="lg:col-span-1 space-y-6">
+          <div className="card-white p-6 space-y-6">
+            <h3 className="text-sm font-bold text-surface-900 uppercase tracking-widest border-b border-surface-100 pb-4">Configuration</h3>
+            
+            <div className="space-y-4">
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">System Name</label>
+                <label className="text-[10px] font-bold text-surface-400 uppercase tracking-widest ml-1">System Name</label>
                 <input
                   type="text"
                   value={kbName}
@@ -154,18 +128,20 @@ const KnowledgeBase = () => {
                       setKbBinFile(`${safeName}_index.bin`);
                     }
                   }}
-                  placeholder="e.g., E-attendance, Banking..."
-                  className="w-full bg-dark-900/80 border border-slate-700/50 rounded-2xl px-6 py-4 text-white focus:outline-none focus:ring-2 focus:ring-primary-500/50 transition-all text-lg font-medium"
+                  placeholder="e.g., Support, Sales..."
+                  className="w-full input-field"
                 />
-                <p className="text-[9px] text-slate-500 px-1 italic">
-                  Files: <span className="text-primary-400/80">{kbJsonFile || '...'}</span> and <span className="text-primary-400/80">{kbBinFile || '...'}</span>
-                </p>
               </div>
 
-              {/* Quick Select */}
+              <div className="p-3 bg-surface-50 rounded-xl border border-surface-300">
+                <p className="text-[10px] font-bold text-surface-400 uppercase mb-1">Generated Index Files</p>
+                <p className="text-[11px] font-mono text-surface-600 truncate">{kbJsonFile || '..._meta.json'}</p>
+                <p className="text-[11px] font-mono text-surface-600 truncate">{kbBinFile || '..._index.bin'}</p>
+              </div>
+
               {Object.keys(knowledgeBases).filter(kb => kb !== "General").length > 0 && (
-                <div className="pt-4 border-t border-slate-700/30">
-                  <p className="text-[9px] font-bold text-slate-600 uppercase tracking-widest mb-3">Existing Templates:</p>
+                <div className="pt-4">
+                  <p className="text-[10px] font-bold text-surface-400 uppercase tracking-widest mb-3">Existing Systems:</p>
                   <div className="flex flex-wrap gap-2">
                     {Object.keys(knowledgeBases).filter(kb => kb !== "General").map(kb => (
                       <button
@@ -175,7 +151,7 @@ const KnowledgeBase = () => {
                           setKbJsonFile(knowledgeBases[kb].jsonfile);
                           setKbBinFile(knowledgeBases[kb].binfile);
                         }}
-                        className="px-3 py-1.5 rounded-lg bg-dark-800 border border-slate-700/50 text-[10px] text-slate-400 hover:text-white hover:border-primary-500/50 transition-all font-bold uppercase tracking-tight"
+                        className="px-2.5 py-1 rounded-md bg-white border border-surface-300 text-[10px] font-bold text-surface-600 hover:border-primary-500 hover:text-primary-600 transition-all"
                       >
                         {kb}
                       </button>
@@ -186,9 +162,18 @@ const KnowledgeBase = () => {
             </div>
           </div>
 
-          {/* Upload Zone */}
+          {status && (
+            <div className={`p-5 rounded-2xl border ${status.type === 'error' ? 'bg-red-50 border-red-100 text-red-600' : 'bg-primary-50 border-primary-100 text-primary-700'}`}>
+              <h4 className="text-xs font-bold uppercase mb-1">{status.type === 'info' ? 'Processing' : 'Status'}</h4>
+              <p className="text-sm font-medium leading-relaxed">{status.message}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Right Col: Upload */}
+        <div className="lg:col-span-2 space-y-6">
           <div
-            className={`${UPLOAD_CARD} ${dragging ? 'ring-4 ring-primary-500/50 scale-[1.02]' : ''}`}
+            className={`card-white p-12 border-2 border-dashed transition-all duration-300 flex flex-col items-center text-center cursor-pointer group ${dragging ? 'border-primary-500 bg-primary-50/30' : 'border-surface-300 hover:border-primary-400'}`}
             onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
             onDragLeave={() => setDragging(false)}
             onDrop={(e) => {
@@ -206,62 +191,55 @@ const KnowledgeBase = () => {
             onClick={() => fileInputRef.current.click()}
           >
             <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".pdf,.txt,.docx,.pptx,.ppt" multiple />
-            <div className="flex flex-col items-center text-center space-y-4">
-              <div className={`w-20 h-20 rounded-2xl bg-primary-500/10 flex items-center justify-center text-[10px] font-bold text-primary-400 mb-2 transition-transform duration-500 ${loading ? 'animate-spin' : 'group-hover:scale-110'}`}>
-                {loading ? '...' : 'UPLOAD'}
-              </div>
-              <div className="space-y-1">
-                <h3 className="text-2xl font-semibold text-white">{files.length > 0 ? `${files.length} document(s) selected` : "Select documents"}</h3>
-                <p className="text-slate-400">{files.length > 0 ? `${(files.reduce((acc, f) => acc + f.size, 0) / 1024).toFixed(1)} KB total` : "Drag and drop your PDF, DOCX, PPTX or TXT here"}</p>
-              </div>
+            <div className="w-16 h-16 bg-primary-50 text-primary-600 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              </svg>
             </div>
+            <h3 className="text-lg font-bold text-surface-900">{files.length > 0 ? `${files.length} documents selected` : "Upload Documents"}</h3>
+            <p className="text-sm text-surface-500 mt-1 max-w-sm">Drag and drop PDFs, TXT, or DOCX files here. Our AI will automatically chunk and index them.</p>
           </div>
 
-          {files.length > 0 && !loading && (
-            <div className="grid grid-cols-1 gap-3">
+          {files.length > 0 && (
+            <div className="space-y-3">
+              <h4 className="text-xs font-bold text-surface-400 uppercase tracking-widest ml-1">Selected Files</h4>
               {files.map((f, index) => (
-                <div key={index} className="flex flex-col md:flex-row md:items-center justify-between p-4 rounded-2xl bg-dark-800/40 border border-slate-700/50 gap-4 group transition-all hover:border-slate-600/50">
-                  <div className="flex items-center gap-4 flex-1">
-                    <div className="w-10 h-10 rounded-xl bg-primary-500/10 flex items-center justify-center text-[10px] font-bold text-primary-400 shrink-0">DOC</div>
-                    <div className="flex-1 space-y-1">
-                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Original: {f.name}</p>
+                <div key={index} className="card-white p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                  <div className="flex items-center gap-4 flex-1 w-full">
+                    <div className="w-10 h-10 bg-surface-100 rounded-xl flex items-center justify-center text-[10px] font-bold text-surface-500">FILE</div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[10px] font-bold text-surface-400 uppercase mb-1">Rename Resource (Optional)</p>
                       <input
                         type="text"
                         value={fileNames[index] || ""}
                         onChange={(e) => setFileNames({ ...fileNames, [index]: e.target.value })}
-                        placeholder="Rename this file..."
-                        className="w-full bg-dark-900/50 border border-slate-700/50 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary-500/50"
+                        className="w-full bg-surface-50 border border-surface-300 rounded-lg px-3 py-1.5 text-sm focus:border-primary-500 outline-none transition-all"
                       />
                     </div>
                   </div>
-                  <button onClick={(e) => { e.stopPropagation(); removeFile(index); }} className="p-2 rounded-xl hover:bg-red-500/10 text-slate-500 hover:text-red-400 transition-colors">
-                    <span className="text-xs font-bold uppercase tracking-widest px-2">Remove</span>
-                    ✕
+                  <button onClick={(e) => { e.stopPropagation(); removeFile(index); }} className="text-red-500 hover:text-red-700 transition-colors p-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
                   </button>
                 </div>
               ))}
+              <div className="pt-4">
+                <button 
+                  onClick={uploadFile} 
+                  disabled={loading || files.length === 0}
+                  className="w-full btn-primary py-4 text-base shadow-lg shadow-primary-500/10"
+                >
+                  {loading ? 'Processing Knowledge...' : 'Start Knowledge Ingestion'}
+                </button>
+              </div>
             </div>
           )}
-
-          <div className="flex flex-col gap-4">
-            {files.length > 0 && !loading && (
-              <button onClick={uploadFile} className="w-full py-5 rounded-2xl bg-gradient-to-r from-primary-600 to-indigo-600 text-white font-bold text-xl shadow-lg shadow-primary-900/50 hover:scale-[1.01] transition-transform">
-                Start Batch Ingestion
-              </button>
-            )}
-          </div>
-
-          {status && (
-            <div className={`rounded-3xl p-8 border-l-4 ${status.type === 'error' ? 'border-red-500' : 'border-primary-500'} ${GLASS_STYLE}`}>
-              <h3 className="text-xl font-bold uppercase tracking-wider mb-2">{status.type === 'info' ? 'Processing...' : 'System Report'}</h3>
-              <p className="text-slate-300 text-lg">{status.message}</p>
-            </div>
-          )}
-
-        </main>
+        </div>
       </div>
     </div>
   );
 };
 
 export default KnowledgeBase;
+
