@@ -40,7 +40,7 @@ logger = logging.getLogger(__name__)
 
 # Constants
 KB_CONFIG_FILE = "knowledge_bases.json"
-ADMIN_TOKEN = os.getenv("ADMIN_TOKEN", "ft-customer-care-secret-2026")
+ADMIN_TOKEN = os.getenv("ADMIN_TOKEN", "admin123")
 
 from fastapi import Header, Cookie
 

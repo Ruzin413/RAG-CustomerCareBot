@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { API_BASE_URL } from './apiConfig'
 
 function ChatBot({ role, token, onLogout }) {
-  const API_KEY = token || "ft-customer-care-secret-2026";
+  const API_KEY = token || "admin123";
   const navigate = useNavigate()
   const location = useLocation()
   const [messages, setMessages] = useState([

@@ -94,7 +94,7 @@ The backend handles AI processing, vector storage, and document ingestion.
 5.  **Configure Environment Variables**:
     Create a file named `.env` in the `ai-services` folder and add the following:
     ```env
-    ADMIN_TOKEN=ft-customer-care-secret-2026
+    ADMIN_TOKEN=admin123
     ```
 
 6.  **Run the Backend Server**:
