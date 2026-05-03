@@ -439,9 +439,12 @@ async def add_memory(request: MemoryAddRequest):
         logger.error(f"Add memory error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get('/knowledge-bases', dependencies=[Depends(verify_token)])
-async def get_knowledge_bases():
-    """List all available knowledge bases"""
+@router.get('/knowledge-bases')
+async def get_knowledge_bases(x_api_key: Optional[str] = Header(None), admin_token: Optional[str] = Cookie(None)):
+    """List all available knowledge bases (accessible with chat or admin token)"""
+    provided_token = x_api_key or admin_token
+    if provided_token not in [CHAT_TOKEN, ADMIN_TOKEN]:
+        raise HTTPException(status_code=401, detail="Unauthorized: Invalid or missing API Token")
     return {
         "status": "success",
         "knowledge_bases": load_kb_config()

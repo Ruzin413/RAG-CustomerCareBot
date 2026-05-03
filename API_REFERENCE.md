@@ -136,7 +136,7 @@ Adds documents specifically to an existing Knowledge Base.
 
 ### `GET /knowledge-bases`
 Returns a registry of all active Knowledge Systems.
-- **Headers:** `X-Api-Key: admin123`
+- **Headers:** `X-Api-Key: admin123` **or** `X-Api-Key: customer-bot-token`
 - **Response (200 OK):** 
   ```json
   { 
