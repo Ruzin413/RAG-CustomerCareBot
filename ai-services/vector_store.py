@@ -26,9 +26,13 @@ class VectorStore:
         self.index = None
         self.metadata = []
         
+        # Centralized Data Directory
+        self.data_dir = os.path.join(os.path.dirname(__file__), "data")
+        os.makedirs(self.data_dir, exist_ok=True)
+        
         # Centralized Chat History
-        self.chat_history_path = "chat_history.json"
-        self.history_index_path = "chat_history_index.bin"
+        self.chat_history_path = os.path.join(self.data_dir, "chat_history.json")
+        self.history_index_path = os.path.join(self.data_dir, "chat_history_index.bin")
         self.chat_history = []
         self.history_index = None
         self.chat_history_verified_meta = [] # Subset of chat_history that is verified

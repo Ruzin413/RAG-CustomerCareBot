@@ -205,7 +205,6 @@ Retrieves interaction logs with support for filtering and pagination.
     "total_pages": 5 
   }
   ```
-
 ### `POST /unverified/update`
 Edits and promotes an unverified chat log entry to the verified knowledge base.
 - **Headers:** 

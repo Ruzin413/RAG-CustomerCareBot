@@ -43,7 +43,9 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Constants
-KB_CONFIG_FILE = "knowledge_bases.json"
+DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
+os.makedirs(DATA_DIR, exist_ok=True)
+KB_CONFIG_FILE = os.path.join(DATA_DIR, "knowledge_bases.json")
 ADMIN_TOKEN = os.getenv("ADMIN_TOKEN", "admin123")
 CHAT_TOKEN = os.getenv("CHAT_TOKEN", "customer-bot-token")
 
@@ -232,8 +234,8 @@ async def upload_document(
     if is_new_kb:
         safe_name = "".join(x for x in kb_name if x.isalnum() or x in "._-").strip()
         target_kb = {
-            "jsonfile": f"{safe_name.lower()}_meta.json",
-            "binfile": f"{safe_name.lower()}_index.bin"
+            "jsonfile": os.path.join(DATA_DIR, f"{safe_name.lower()}_meta.json"),
+            "binfile": os.path.join(DATA_DIR, f"{safe_name.lower()}_index.bin")
         }
     else:
         target_kb = kb_config[kb_name]
