@@ -5,49 +5,79 @@
 ---
 
 ## 🔒 Authorization
-All endpoints require a static API Key for security.
-- **Header:** `X-API-Key: ft-customer-care-secret-2026`
-- **Cookie:** `admin_token=ft-customer-care-secret-2026`
-- **Logic:** The backend `verify_token` dependency checks both Header and Cookie. If either contains the correct token, access is granted.
+The system uses two static tokens for different security levels.
+- **Admin Token:** `admin123` (Full access to all endpoints)
+- **Chat Token:** `customer-bot-token` (Access only to `/process` and `/chat`)
+
+**Header:** `X-API-Key: <token>`
+**Cookie:** `admin_token=<token>`
+**Body (Chat only):** `{ "token": "<token>", ... }`
+
+**Logic:** The backend checks Header, Cookie, or Body (for chat) for a valid token.
 
 ---
 
-## 1. Chat & Processing
+## 1. Authentication & Session
+
+### `POST /login`
+Verifies the administrative token and returns the user's role.
+- **Headers:** `Content-Type: application/json`
+- **JSON Payload:** 
+  ```json
+  { "token": "admin123" }
+  ```
+- **Response (200 OK):**
+  ```json
+  { 
+    "status": "success", 
+    "role": "admin", 
+    "token": "admin123" 
+  }
+  ```
+- **Error (401 Unauthorized):**
+  ```json
+  { "detail": "Invalid admin token" }
+  ```
+
+---
+
+## 2. Chat & Processing
 
 ### `POST /process` (or `/chat`)
-Processes user queries using the 3-stage hybrid pipeline.
+Processes user queries using the 3-stage hybrid RAG pipeline.
 - **Headers:** 
-  - `X-API-Key: ft-customer-care-secret-2026`
+  - `X-API-Key: customer-bot-token` (or admin123/cookie)
   - `Content-Type: application/json`
 - **JSON Payload:** 
   ```json
   { 
     "message": "String", 
-    "kb_name": "String (Optional)" 
+    "kb_name": "String (Optional)",
+    "token": "customer-bot-token (Optional/Alternative to Header)"
   }
   ```
 - **Response (200 OK):**
   ```json
   { 
     "status": "success", 
-    "intent": "String", 
+    "intent": "faq | greeting | goodbye | navigate", 
     "answer": "String", 
     "redirect_to": "/path or null", 
     "source": "Knowledge Base | Fallback (Local)",
     "metadata": {
-        "timestamp": "2026-04-30 10:00:00",
+        "timestamp": "2026-05-03 10:00:00",
         "timing_breakdown": { 
-          "semantic_search": "45ms",
-          "reranking": "30ms",
-          "generation": "120ms",
-          "total_latency": "195ms" 
+          "total_latency": "195.5ms" 
         }
     }
   }
   ```
 
+> [!NOTE]
+> **Navigation Logic:** When the system detects a `navigate` intent (e.g., "go to reports"), it matches keywords against the `NAV_MAP`. If a match is found, the response includes a non-null `redirect_to` path, which the frontend can use to perform an automatic client-side redirect.
+
 ### `POST /clear-cache`
-Manually unloads AI models from memory and clears GPU cache.
+Manually unloads AI models from memory and clears GPU cache (CUDA).
 - **Headers:** None required.
 - **Response (200 OK):** 
   ```json
@@ -65,17 +95,17 @@ Basic health check to verify service availability.
   { 
     "status": "healthy", 
     "service": "Chatbot API", 
-    "timestamp": "2026-04-30 10:00:00" 
+    "timestamp": "2026-05-03 10:00:00" 
   }
   ```
 
 ---
 
-## 2. Knowledge Base Management
+## 3. Knowledge Base Management
 
 ### `POST /upload`
 Initializes a new Knowledge Base or adds files to an existing one.
-- **Headers:** `X-API-Key: ft-customer-care-secret-2026`
+- **Headers:** `X-API-Key: admin123`
 - **Multipart Form:** 
   - `kb_name`: "String" (Default: "General")
   - `file`: (Files) Multiple files supported
@@ -92,14 +122,14 @@ Initializes a new Knowledge Base or adds files to an existing one.
     "failed_files": [],
     "processing_stats": {
       "total_time": "2.1s",
-      "completion_timestamp": "2026-04-30 10:05:00"
+      "completion_timestamp": "2026-05-03 10:05:00"
     }
   }
   ```
 
 ### `POST /knowledge-bases/<kb_name>/append`
 Adds documents specifically to an existing Knowledge Base.
-- **Headers:** `X-API-Key: ft-customer-care-secret-2026`
+- **Headers:** `X-API-Key: admin123`
 - **Multipart Form:** 
   - `file`: (Files) Multiple files supported
   - `custom_names`: (JSON Array string) Optional
@@ -107,7 +137,7 @@ Adds documents specifically to an existing Knowledge Base.
 
 ### `GET /knowledge-bases`
 Returns a registry of all active Knowledge Systems.
-- **Headers:** `X-API-Key: ft-customer-care-secret-2026`
+- **Headers:** `X-API-Key: admin123`
 - **Response (200 OK):** 
   ```json
   { 
@@ -122,7 +152,7 @@ Returns a registry of all active Knowledge Systems.
 ### `POST /knowledge-bases`
 Manually registers or updates a Knowledge Base configuration.
 - **Headers:** 
-  - `X-API-Key: ft-customer-care-secret-2026`
+  - `X-API-Key: admin123`
   - `Content-Type: application/json`
 - **JSON Payload:**
   ```json
@@ -136,7 +166,7 @@ Manually registers or updates a Knowledge Base configuration.
 
 ### `DELETE /knowledge-bases/<name>`
 Removes a Knowledge Base configuration and deletes its physical vector files.
-- **Headers:** `X-API-Key: ft-customer-care-secret-2026`
+- **Headers:** `X-API-Key: admin123`
 - **Response (200 OK):** 
   ```json
   { "status": "success", "message": "Knowledge base 'Name' and its files have been deleted" }
@@ -156,11 +186,11 @@ Returns the total number of chunks currently indexed in the active vector store.
 
 ---
 
-## 3. Learning Loop (Admin)
+## 4. Learning Loop (Admin)
 
 ### `GET /chat-history`
-Retrieves interaction logs from `chat_history.json` with support for filtering and pagination.
-- **Headers:** `X-API-Key: ft-customer-care-secret-2026`
+Retrieves interaction logs with support for filtering and pagination.
+- **Headers:** `X-API-Key: admin123`
 - **Query Params:** 
   - `kb_name`: "String" (Optional)
   - `page`: Integer (Default: 1)
@@ -170,7 +200,7 @@ Retrieves interaction logs from `chat_history.json` with support for filtering a
   { 
     "status": "success",
     "items": [
-      { "chunk_id": "...", "question": "...", "answer": "...", "verified": false, "kb_name": "..." }
+      { "chunk_id": "...", "question": "...", "answer": "...", "verified": false, "kb_name": "...", "created_at": "..." }
     ], 
     "total": 50, 
     "page": 1, 
@@ -181,14 +211,14 @@ Retrieves interaction logs from `chat_history.json` with support for filtering a
 ### `POST /unverified/update`
 Edits and promotes an unverified chat log entry to the verified knowledge base.
 - **Headers:** 
-  - `X-API-Key: ft-customer-care-secret-2026`
+  - `X-API-Key: admin123`
   - `Content-Type: application/json`
 - **JSON Payload:** 
   ```json
   { 
     "chunk_id": "String", 
     "text": "String (new answer)", 
-    "kb_name": "String" 
+    "kb_name": "String (Optional)" 
   }
   ```
 - **Response (200 OK):** 
@@ -199,7 +229,7 @@ Edits and promotes an unverified chat log entry to the verified knowledge base.
 ### `POST /unverified/delete`
 Permanently discards an unverified chat interaction.
 - **Headers:** 
-  - `X-API-Key: ft-customer-care-secret-2026`
+  - `X-API-Key: admin123`
   - `Content-Type: application/json`
 - **JSON Payload:** 
   ```json
@@ -214,9 +244,9 @@ Permanently discards an unverified chat interaction.
   ```
 
 ### `POST /memory/add`
-Manually inserts a pre-verified Question/Answer pair into a specific knowledge base history.
+Manually inserts a pre-verified Question/Answer pair.
 - **Headers:** 
-  - `X-API-Key: ft-customer-care-secret-2026`
+  - `X-API-Key: admin123`
   - `Content-Type: application/json`
 - **JSON Payload:** 
   ```json
@@ -233,10 +263,19 @@ Manually inserts a pre-verified Question/Answer pair into a specific knowledge b
 
 ---
 
-## 4. Frontend Implementation Hooks
+## 5. Navigation Map
+The system detects navigation intent and provides a `redirect_to` path.
+
+| Shortcut | Keywords | Path |
+| :--- | :--- | :--- |
+| `report` | report | `/report` |
+
+---
+
+## 6. Frontend Implementation Hooks
 
 ```javascript
-const API_KEY = 'ft-customer-care-secret-2026';
+const API_KEY = 'admin123';
 const BASE_URL = 'http://localhost:8001/CustomerCare';
 
 // Example: Chat Processing
@@ -252,14 +291,3 @@ const sendChat = async (message, kbName) => {
   return await res.json();
 };
 ```
-
----
-
-## 5. Navigation Map
-The system uses `ai-services/navigation_utils.py` to handle redirects.
-
-| Shortcut | Keywords | Path |
-| :--- | :--- | :--- |
-| `report` | report | `/report` |
-| `history` | history | `/history` |
-| `payment` | payment, pay | `/payment` |

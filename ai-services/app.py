@@ -41,6 +41,7 @@ logger = logging.getLogger(__name__)
 # Constants
 KB_CONFIG_FILE = "knowledge_bases.json"
 ADMIN_TOKEN = os.getenv("ADMIN_TOKEN", "admin123")
+CHAT_TOKEN = os.getenv("CHAT_TOKEN", "customer-bot-token")
 
 from fastapi import Header, Cookie
 
@@ -84,6 +85,7 @@ ai_pipeline = HybridPipeline(vector_store=vector_store)
 class ChatRequest(BaseModel):
     message: str
     kb_name: Optional[str] = None
+    token: Optional[str] = None
 
 class UpdateUnverifiedRequest(BaseModel):
     chunk_id: str
@@ -262,10 +264,16 @@ async def append_to_kb(
         logger.error(f"Append error for {kb_name}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.post('/process', dependencies=[Depends(verify_token)])
+@router.post('/process')
 @router.post('/chat')
-async def chat(request_data: ChatRequest):
+async def chat(request_data: ChatRequest, x_api_key: Optional[str] = Header(None), admin_token: Optional[str] = Cookie(None)):
     """Chat endpoint - processes user queries using 3-stage hybrid pipeline"""
+    # Manual token verification to support Body, Header, or Cookie
+    provided_token = request_data.token or x_api_key or admin_token
+    # Allow both CHAT_TOKEN and ADMIN_TOKEN for chat
+    if provided_token not in [CHAT_TOKEN, ADMIN_TOKEN]:
+        raise HTTPException(status_code=401, detail="Unauthorized: Invalid or missing API Token")
+
     message = request_data.message.strip()
     
     if not message:
