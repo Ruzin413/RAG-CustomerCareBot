@@ -207,7 +207,6 @@ class VectorStore:
             if sim_score >= threshold:
                 if idx < len(metadata):
                     chunk = metadata[idx].copy()
-                    
                     # Synthesize 'text' field if missing (for chat history items)
                     if "text" not in chunk:
                         q = chunk.get("question", "")
@@ -254,9 +253,7 @@ class VectorStore:
                 # Match the exact question rather than checking if it exists as a substring
                 if normalized_q == q_text.strip():
                     return True
-                    
         return False
-
     def save_unverified_query(self, question, kb_name="General"):
         """Log an unanswered user query for admin review in centralized chat history."""
         if self._is_duplicate(question, kb_name):
