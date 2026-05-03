@@ -186,6 +186,7 @@ class HybridPipeline:
         text = text.strip('"\'')
 
         # Ensure the response ends with a full sentence
+        text = text.strip()
         if text:
             last_punc = max(text.rfind('.'), text.rfind('!'), text.rfind('?'))
             # Force trim at the last punctuation to prevent cut-off fragment sentences
@@ -405,6 +406,7 @@ class HybridPipeline:
                     answer = answer + " " + extractive
                 else:
                     answer = extractive
+                answer = self._clean_generated_response(answer)
             logger.info(f"Qwen2 generated answer ({len(answer)} chars)")
             return answer
         except Exception as e:
@@ -504,7 +506,6 @@ class HybridPipeline:
                 self.vector_store.save_interaction(*interaction_to_save)
             except Exception as e:
                 logger.error(f"Error logging interaction: {e}")
-                
         return response
     # ======================================================================
     # HELPER
