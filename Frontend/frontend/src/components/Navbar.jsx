@@ -30,11 +30,10 @@ const Navbar = ({ onLogout }) => {
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-                    location.pathname === item.path
+                  className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${location.pathname === item.path
                       ? 'bg-primary-600 text-white shadow-sm shadow-primary-200'
                       : 'text-surface-500 hover:text-surface-900 hover:bg-surface-50'
-                  }`}
+                    }`}
                 >
                   {item.name}
                 </Link>
@@ -54,5 +53,4 @@ const Navbar = ({ onLogout }) => {
     </nav>
   )
 }
-
 export default Navbar
