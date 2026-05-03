@@ -52,8 +52,7 @@ Processes user queries using the 3-stage hybrid RAG pipeline.
   ```json
   { 
     "message": "String", 
-    "kb_name": "String (Optional)",
-    "token": "customer-bot-token (Optional/Alternative to Header)"
+    "kb_name": "String "
   }
   ```
 - **Response (200 OK):**
