@@ -247,7 +247,7 @@ class HybridPipeline:
         # Filter: Only keep results that actually relate to the query
         # ms-marco scores > 0 are usually strong matches, < -4 are usually noise.
         # Relaxing threshold to -10.0 to return more answers
-        filtered = [res for res in reranked if res['rerank_score'] > -10.0]
+        filtered = [res for res in reranked if res['rerank_score'] > -8.0]
         
         if not filtered and reranked:
             logger.info(f"All {len(reranked)} matches failed reranking (Top score: {reranked[0]['rerank_score']:.2f})")

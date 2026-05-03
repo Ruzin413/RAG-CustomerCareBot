@@ -12,7 +12,6 @@ const KnowledgeBase = ({ token }) => {
   const [kbName, setKbName] = useState("");
   const [kbJsonFile, setKbJsonFile] = useState("");
   const [kbBinFile, setKbBinFile] = useState("");
-  const [fileNames, setFileNames] = useState({});
   const fileInputRef = useRef(null);
 
   const fetchKBs = async () => {
@@ -36,25 +35,13 @@ const KnowledgeBase = ({ token }) => {
   const handleFileChange = (e) => {
     const selectedFiles = Array.from(e.target.files);
     if (selectedFiles.length > 0) {
-      const startIdx = files.length;
-      const newNames = { ...fileNames };
-      selectedFiles.forEach((f, i) => {
-        newNames[startIdx + i] = f.name;
-      });
       setFiles(prev => [...prev, ...selectedFiles]);
-      setFileNames(newNames);
       setStatus(null);
     }
   };
 
   const removeFile = (index) => {
-    const updatedFiles = files.filter((_, i) => i !== index);
-    setFiles(updatedFiles);
-    const newNames = {};
-    updatedFiles.forEach((f, i) => {
-      newNames[i] = i < index ? fileNames[i] : fileNames[i + 1];
-    });
-    setFileNames(newNames);
+    setFiles(files.filter((_, i) => i !== index));
   };
 
   const uploadFile = async () => {
@@ -63,9 +50,8 @@ const KnowledgeBase = ({ token }) => {
     setStatus({ message: `Analyzing ${files.length} document(s) and generating knowledge...`, type: "info" });
 
     const formData = new FormData();
-    files.forEach((f, i) => {
+    files.forEach((f) => {
       formData.append('file', f);
-      formData.append('custom_names', fileNames[i] || f.name);
     });
     formData.append('kb_name', kbName || "General");
     formData.append('jsonfile', kbJsonFile);
@@ -86,7 +72,6 @@ const KnowledgeBase = ({ token }) => {
           type: "success"
         });
         setFiles([]);
-        setFileNames({});
         fetchKBs();
       } else {
         throw new Error(result.message || "Failed to process documents");
@@ -204,18 +189,10 @@ const KnowledgeBase = ({ token }) => {
             <div className="space-y-3">
               <h4 className="text-xs font-bold text-surface-400 uppercase tracking-widest ml-1">Selected Files</h4>
               {files.map((f, index) => (
-                <div key={index} className="card-white p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                  <div className="flex items-center gap-4 flex-1 w-full">
+                <div key={index} className="card-white p-4 flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-4 flex-1 min-w-0">
                     <div className="w-10 h-10 bg-surface-100 rounded-xl flex items-center justify-center text-[10px] font-bold text-surface-500">FILE</div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[10px] font-bold text-surface-400 uppercase mb-1">Rename Resource (Optional)</p>
-                      <input
-                        type="text"
-                        value={fileNames[index] || ""}
-                        onChange={(e) => setFileNames({ ...fileNames, [index]: e.target.value })}
-                        className="w-full bg-surface-50 border border-surface-300 rounded-lg px-3 py-1.5 text-sm focus:border-primary-500 outline-none transition-all"
-                      />
-                    </div>
+                    <p className="text-sm font-medium text-surface-700 truncate">{f.name}</p>
                   </div>
                   <button onClick={(e) => { e.stopPropagation(); removeFile(index); }} className="text-red-500 hover:text-red-700 transition-colors p-2">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

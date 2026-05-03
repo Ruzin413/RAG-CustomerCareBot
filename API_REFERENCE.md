@@ -9,7 +9,7 @@ The system uses two static tokens for different security levels.
 - **Admin Token:** `admin123` (Full access to all endpoints)
 - **Chat Token:** `customer-bot-token` (Access only to `/process` and `/chat`)
 
-**Header:** `X-API-Key: <token>`
+**Header:** `X-Api-Key: <token>`
 **Cookie:** `admin_token=<token>`
 **Body (Chat only):** `{ "token": "<token>", ... }`
 
@@ -46,7 +46,7 @@ Verifies the administrative token and returns the user's role.
 ### `POST /process` (or `/chat`)
 Processes user queries using the 3-stage hybrid RAG pipeline.
 - **Headers:** 
-  - `X-API-Key: customer-bot-token` (or admin123/cookie)
+  - `X-Api-Key: customer-bot-token` (or admin123/cookie)
   - `Content-Type: application/json`
 - **JSON Payload:** 
   ```json
@@ -105,11 +105,11 @@ Basic health check to verify service availability.
 
 ### `POST /upload`
 Initializes a new Knowledge Base or adds files to an existing one.
-- **Headers:** `X-API-Key: admin123`
+- **Headers:** `X-Api-Key: admin123`
 - **Multipart Form:** 
-  - `kb_name`: "String" (Default: "General")
-  - `file`: (Files) Multiple files supported
-  - `custom_names`: (JSON Array string) Optional display names
+  - `kb_name`: "String" **(Required)** — Name of the knowledge base
+  - `file`: (Files) Multiple files supported. The original filename is used as the display name.
+- **Error (400 Bad Request):** `{ "detail": "kb_name is required and cannot be empty" }`
 - **Response (200 OK):** 
   ```json
   { 
@@ -129,15 +129,14 @@ Initializes a new Knowledge Base or adds files to an existing one.
 
 ### `POST /knowledge-bases/<kb_name>/append`
 Adds documents specifically to an existing Knowledge Base.
-- **Headers:** `X-API-Key: admin123`
+- **Headers:** `X-Api-Key: admin123`
 - **Multipart Form:** 
-  - `file`: (Files) Multiple files supported
-  - `custom_names`: (JSON Array string) Optional
+  - `file`: (Files) Multiple files supported. The original filename is used as the display name.
 - **Response (200 OK):** Same structure as `/upload`.
 
 ### `GET /knowledge-bases`
 Returns a registry of all active Knowledge Systems.
-- **Headers:** `X-API-Key: admin123`
+- **Headers:** `X-Api-Key: admin123`
 - **Response (200 OK):** 
   ```json
   { 
@@ -152,7 +151,7 @@ Returns a registry of all active Knowledge Systems.
 ### `POST /knowledge-bases`
 Manually registers or updates a Knowledge Base configuration.
 - **Headers:** 
-  - `X-API-Key: admin123`
+  - `X-Api-Key: admin123`
   - `Content-Type: application/json`
 - **JSON Payload:**
   ```json
@@ -166,7 +165,7 @@ Manually registers or updates a Knowledge Base configuration.
 
 ### `DELETE /knowledge-bases/<name>`
 Removes a Knowledge Base configuration and deletes its physical vector files.
-- **Headers:** `X-API-Key: admin123`
+- **Headers:** `X-Api-Key: admin123`
 - **Response (200 OK):** 
   ```json
   { "status": "success", "message": "Knowledge base 'Name' and its files have been deleted" }
@@ -190,7 +189,7 @@ Returns the total number of chunks currently indexed in the active vector store.
 
 ### `GET /chat-history`
 Retrieves interaction logs with support for filtering and pagination.
-- **Headers:** `X-API-Key: admin123`
+- **Headers:** `X-Api-Key: admin123`
 - **Query Params:** 
   - `kb_name`: "String" (Optional)
   - `page`: Integer (Default: 1)
@@ -211,7 +210,7 @@ Retrieves interaction logs with support for filtering and pagination.
 ### `POST /unverified/update`
 Edits and promotes an unverified chat log entry to the verified knowledge base.
 - **Headers:** 
-  - `X-API-Key: admin123`
+  - `X-Api-Key: admin123`
   - `Content-Type: application/json`
 - **JSON Payload:** 
   ```json
@@ -229,7 +228,7 @@ Edits and promotes an unverified chat log entry to the verified knowledge base.
 ### `POST /unverified/delete`
 Permanently discards an unverified chat interaction.
 - **Headers:** 
-  - `X-API-Key: admin123`
+  - `X-Api-Key: admin123`
   - `Content-Type: application/json`
 - **JSON Payload:** 
   ```json
@@ -246,7 +245,7 @@ Permanently discards an unverified chat interaction.
 ### `POST /memory/add`
 Manually inserts a pre-verified Question/Answer pair.
 - **Headers:** 
-  - `X-API-Key: admin123`
+  - `X-Api-Key: admin123`
   - `Content-Type: application/json`
 - **JSON Payload:** 
   ```json
@@ -275,7 +274,8 @@ The system detects navigation intent and provides a `redirect_to` path.
 ## 6. Frontend Implementation Hooks
 
 ```javascript
-const API_KEY = 'admin123';
+const CHAT_TOKEN = 'customer-bot-token';
+const ADMIN_TOKEN = 'admin123';
 const BASE_URL = 'http://localhost:8001/CustomerCare';
 
 // Example: Chat Processing
@@ -284,7 +284,7 @@ const sendChat = async (message, kbName) => {
     method: 'POST',
     headers: { 
       'Content-Type': 'application/json', 
-      'X-API-Key': API_KEY 
+      'X-Api-Key': CHAT_TOKEN 
     },
     body: JSON.stringify({ message, kb_name: kbName })
   });

@@ -102,7 +102,7 @@ class AddKBRequest(BaseModel):
     binfile: str
 
 # Helper Functions
-async def process_and_add_files(kb_name, uploaded_files: List[UploadFile], custom_names, target_kb, is_new_kb=False):
+async def process_and_add_files(kb_name, uploaded_files: List[UploadFile], target_kb, is_new_kb=False):
     """Helper to process files and add them to a specific KB."""
     # Ensure KB files exist
     meta_path = target_kb['jsonfile']
@@ -119,9 +119,9 @@ async def process_and_add_files(kb_name, uploaded_files: List[UploadFile], custo
     failed_files = []
     start_time = time.time()
 
-    for file, custom_name in zip(uploaded_files, custom_names):
-        display_name = custom_name or file.filename
-        if not file.filename or not display_name:
+    for file in uploaded_files:
+        display_name = file.filename
+        if not display_name:
             continue
             
         if display_name in existing_files:
@@ -211,16 +211,16 @@ async def login(request: LoginRequest):
 
 @router.post('/upload', dependencies=[Depends(verify_token)])
 async def upload_document(
-    kb_name: str = Form('General'),
-    file: List[UploadFile] = File(...),
-    custom_names: Optional[List[str]] = Form(None)
+    kb_name: str = Form(...),
+    file: List[UploadFile] = File(...)
 ):
     """Upload and process multiple documents into a new or existing KB"""
-    uploaded_files = file
+    # Validate kb_name
+    if not kb_name or not kb_name.strip():
+        raise HTTPException(status_code=400, detail="kb_name is required and cannot be empty")
     
-    # Fix for custom_names length mismatch or missing
-    if not custom_names or len(custom_names) < len(uploaded_files):
-        custom_names = [f.filename for f in uploaded_files]
+    kb_name = kb_name.strip()
+    uploaded_files = file
 
     kb_config = load_kb_config()
     is_new_kb = kb_name not in kb_config
@@ -233,7 +233,7 @@ async def upload_document(
         }
     else:
         target_kb = kb_config[kb_name]
-    result = await process_and_add_files(kb_name, uploaded_files, custom_names, target_kb, is_new_kb=is_new_kb)
+    result = await process_and_add_files(kb_name, uploaded_files, target_kb, is_new_kb=is_new_kb)
     if result["status"] == "error" and not result["processed_files"]:
         raise HTTPException(status_code=500, detail=result)
     return result
@@ -241,22 +241,18 @@ async def upload_document(
 @router.post('/knowledge-bases/{kb_name}/append', dependencies=[Depends(verify_token)])
 async def append_to_kb(
     kb_name: str,
-    file: List[UploadFile] = File(...),
-    custom_names: Optional[List[str]] = Form(None)
+    file: List[UploadFile] = File(...)
 ):
     """Add more files to an existing Knowledge Base"""
     try:
         uploaded_files = file
-        
-        if not custom_names or len(custom_names) < len(uploaded_files):
-            custom_names = [f.filename for f in uploaded_files]
 
         kb_config = load_kb_config()
         if kb_name not in kb_config:
             raise HTTPException(status_code=404, detail=f"KB '{kb_name}' not found")
             
         target_kb = kb_config[kb_name]
-        result = await process_and_add_files(kb_name, uploaded_files, custom_names, target_kb, is_new_kb=False)
+        result = await process_and_add_files(kb_name, uploaded_files, target_kb, is_new_kb=False)
         return result
     except HTTPException:
         raise
