@@ -16,7 +16,35 @@ from hybrid_pipeline import HybridPipeline
 # Load environment variables
 load_dotenv()
 
-app = FastAPI(title="RAG CustomerCare API", version="2.0.0")
+tags_metadata = [
+    {
+        "name": "Authentication",
+        "description": "Operations with authentication.",
+    },
+    {
+        "name": "Chat",
+        "description": "Endpoints for user chat interactions with the RAG pipeline.",
+    },
+    {
+        "name": "Knowledge Base",
+        "description": "Manage document uploads and Knowledge Bases.",
+    },
+    {
+        "name": "Memory & History",
+        "description": "Manage verified and unverified chat memory items.",
+    },
+    {
+        "name": "System",
+        "description": "System health and administrative endpoints.",
+    }
+]
+
+app = FastAPI(
+    title="RAG CustomerCare API", 
+    version="2.0.0",
+    description="API for the RAG CustomerCareBot system, supporting hybrid retrieval, document ingestion, and chat history management.",
+    openapi_tags=tags_metadata
+)
 
 # Configure CORS
 app.add_middleware(
@@ -208,14 +236,14 @@ async def process_and_add_files(kb_name, uploaded_files: List[UploadFile], targe
 
 # API Endpoints
 
-@router.post('/login')
+@router.post('/login', tags=["Authentication"])
 async def login(request: LoginRequest):
     """Verify admin token and return user role"""
     if request.token == ADMIN_TOKEN:
         return {"status": "success", "role": "admin", "token": ADMIN_TOKEN}
     raise HTTPException(status_code=401, detail="Invalid admin token")
 
-@router.post('/upload', dependencies=[Depends(verify_token)])
+@router.post('/upload', dependencies=[Depends(verify_token)], tags=["Knowledge Base"])
 async def upload_document(
     kb_name: str = Form(...),
     file: List[UploadFile] = File(...)
@@ -244,7 +272,7 @@ async def upload_document(
         raise HTTPException(status_code=500, detail=result)
     return result
 
-@router.post('/knowledge-bases/{kb_name}/append', dependencies=[Depends(verify_token)])
+@router.post('/knowledge-bases/{kb_name}/append', dependencies=[Depends(verify_token)], tags=["Knowledge Base"])
 async def append_to_kb(
     kb_name: str,
     file: List[UploadFile] = File(...)
@@ -266,8 +294,8 @@ async def append_to_kb(
         logger.error(f"Append error for {kb_name}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.post('/process')
-@router.post('/chat')
+@router.post('/process', tags=["Chat"])
+@router.post('/chat', tags=["Chat"])
 async def chat(request_data: ChatRequest, x_api_key: Optional[str] = Header(None), admin_token: Optional[str] = Cookie(None)):
     """Chat endpoint - processes user queries using 3-stage hybrid pipeline"""
     # Manual token verification to support Body, Header, or Cookie
@@ -339,7 +367,7 @@ async def chat(request_data: ChatRequest, x_api_key: Optional[str] = Header(None
         logger.error(f"Chat error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"I encountered an error processing your request: {str(e)}")
 
-@router.get('/stats')
+@router.get('/stats', tags=["System"])
 async def get_stats():
     """Get statistics about the knowledge base vector store"""
     try:
@@ -353,7 +381,7 @@ async def get_stats():
         logger.error(f"Stats error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get('/chat-history', dependencies=[Depends(verify_token)])
+@router.get('/chat-history', dependencies=[Depends(verify_token)], tags=["Memory & History"])
 async def get_chat_history(kb_name: Optional[str] = None, page: int = 1, page_size: int = 10):
     """Get unverified items (chat history) with filtering and pagination"""
     try:
@@ -366,7 +394,7 @@ async def get_chat_history(kb_name: Optional[str] = None, page: int = 1, page_si
         logger.error(f"Chat history fetch error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.post('/unverified/update', dependencies=[Depends(verify_token)])
+@router.post('/unverified/update', dependencies=[Depends(verify_token)], tags=["Memory & History"])
 async def update_unverified(data: UpdateUnverifiedRequest):
     """Update and verify a memory item"""
     try:
@@ -397,7 +425,7 @@ async def update_unverified(data: UpdateUnverifiedRequest):
         logger.error(f"Update error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.post('/unverified/delete', dependencies=[Depends(verify_token)])
+@router.post('/unverified/delete', dependencies=[Depends(verify_token)], tags=["Memory & History"])
 async def delete_unverified(data: DeleteUnverifiedRequest):
     """Delete an unverified memory item"""
     try:
@@ -424,7 +452,7 @@ async def delete_unverified(data: DeleteUnverifiedRequest):
         logger.error(f"Delete error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.post('/memory/add', dependencies=[Depends(verify_token)])
+@router.post('/memory/add', dependencies=[Depends(verify_token)], tags=["Memory & History"])
 async def add_memory(request: MemoryAddRequest):
     """Manually add a verified Q/A pair to a specific knowledge base (saved to central history)"""
     try:
@@ -445,7 +473,7 @@ async def add_memory(request: MemoryAddRequest):
         logger.error(f"Add memory error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get('/knowledge-bases')
+@router.get('/knowledge-bases', tags=["Knowledge Base"])
 async def get_knowledge_bases(x_api_key: Optional[str] = Header(None), admin_token: Optional[str] = Cookie(None)):
     """List all available knowledge bases (accessible with chat or admin token)"""
     provided_token = x_api_key or admin_token
@@ -456,7 +484,7 @@ async def get_knowledge_bases(x_api_key: Optional[str] = Header(None), admin_tok
         "knowledge_bases": load_kb_config()
     }
 
-@router.delete('/knowledge-bases/{name}', dependencies=[Depends(verify_token)])
+@router.delete('/knowledge-bases/{name}', dependencies=[Depends(verify_token)], tags=["Knowledge Base"])
 async def delete_knowledge_base(name: str):
     """Delete a knowledge base configuration and its files"""
     try:
@@ -487,7 +515,7 @@ async def delete_knowledge_base(name: str):
         logger.error(f"Delete KB error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.post('/knowledge-bases', dependencies=[Depends(verify_token)])
+@router.post('/knowledge-bases', dependencies=[Depends(verify_token)], tags=["Knowledge Base"])
 async def add_knowledge_base(data: AddKBRequest):
     """Add or update a knowledge base configuration"""
     name = data.name
@@ -500,7 +528,7 @@ async def add_knowledge_base(data: AddKBRequest):
     
     return {"status": "success", "message": f"Knowledge base '{name}' updated"}
 
-@router.post('/clear-cache')
+@router.post('/clear-cache', tags=["System"])
 async def clear_model_cache():
     """Manually clear models from memory and empty GPU cache"""
     success = ai_pipeline.cleanup()
@@ -512,7 +540,7 @@ async def clear_model_cache():
     else:
         raise HTTPException(status_code=500, detail="Failed to clear memory cache")
 
-@router.get('/health')
+@router.get('/health', tags=["System"])
 async def health_check():
     """Health check endpoint"""
     return {
