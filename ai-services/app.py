@@ -338,8 +338,16 @@ async def chat(request_data: ChatRequest, x_api_key: Optional[str] = Header(None
             english_query = trans_data["english_query"]
             user_lang = trans_data["original_language"]
 
+            # Query Augmentation: If it was translated, append the original text.
+            # This ensures English loanwords (e.g., 'payroll', 'login') that might have been 
+            # destroyed by phonetic transliteration are still captured by the semantic search!
+            if user_lang != "en":
+                search_query = f"{english_query} (Original: {message})"
+            else:
+                search_query = english_query
+
             result = await asyncio.wait_for(
-                asyncio.to_thread(ai_pipeline.process_query, english_query, kb_config=target_kb_copy),
+                asyncio.to_thread(ai_pipeline.process_query, search_query, kb_config=target_kb_copy, language=user_lang),
                 timeout=120.0
             )
 
@@ -356,6 +364,18 @@ async def chat(request_data: ChatRequest, x_api_key: Optional[str] = Header(None
 
         logger.info(f"Intent: {result['intent']}, Context found: {result['context_found']}")
         logger.info(f"Response: {result['reply'][:100]}...")
+
+        # Centralized Chat History Logging in Native Language
+        try:
+            kb_to_log = result.get("kb_name", "General")
+            if not result["context_found"]:
+                # Log unverified queries (fallback)
+                ai_pipeline.vector_store.save_unverified_query(message, kb_name=kb_to_log, language=user_lang)
+            elif result.get("should_log"):
+                # Log successful generated interaction
+                ai_pipeline.vector_store.save_interaction(message, final_reply, kb_name=kb_to_log, language=user_lang)
+        except Exception as e:
+            logger.error(f"Error saving chat history: {e}")
 
         return {
             "status": "success",
@@ -458,7 +478,6 @@ async def delete_unverified(data: DeleteUnverifiedRequest):
     except Exception as e:
         logger.error(f"Delete error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-
 @router.post('/memory/add', dependencies=[Depends(verify_token)], tags=["Memory & History"])
 async def add_memory(request: MemoryAddRequest):
     """Manually add a verified Q/A pair to a specific knowledge base (saved to central history)"""

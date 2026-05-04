@@ -414,20 +414,16 @@ class HybridPipeline:
     # ======================================================================
     # STAGE 3: Fallback
     # ======================================================================
-    def stage3_fallback(self, text: str, kb_name="General") -> str:
+    def stage3_fallback(self, text: str, kb_name="General", language="en") -> str:
         """
         No relevant context found — log query and return polite not-found message.
         """
-        logger.info(f"No context found for KB '{kb_name}'. Logging unverified query.")
-        try:
-            self.vector_store.save_unverified_query(text, kb_name=kb_name)
-        except Exception as e:
-            logger.error(f"Error saving unverified query: {e}")
+        # We now log unverified queries in app.py after translation handling
         return random.choice(self.templates["not_found"])
     # ======================================================================
     # MAIN PIPELINE
     # ======================================================================
-    def process_query(self, text: str, kb_config: dict = None) -> dict:
+    def process_query(self, text: str, kb_config: dict = None, language: str = "en") -> dict:
         """
         Full 3-Stage RAG Pipeline:
           Stage 0 — Intent Classification
@@ -484,27 +480,21 @@ class HybridPipeline:
                 logger.info("Stage 2: Generating grounded response with Qwen2-0.5B-Instruct...")
                 reply = self.stage2_grounded_generation(text, context)
                 
-                # Auto-log interaction as unverified for future learning
                 if not from_history:
                     kb_name = kb_config.get('kb_name', 'General') if kb_config else 'General'
-                    interaction_to_save = (text, reply, kb_name)
+                    should_log = True
                 else:
+                    should_log = False
                     logger.info("Skipping auto-log: Context sourced from existing chat history.")
                 
-                response = self._build_response(intent, True, reply, start_time)
+                response = self._build_response(intent, True, reply, start_time, should_log=should_log, kb_name=kb_name)
             else:
                 # --- Stage 3: Fallback ---
                 logger.info("Stage 3: No context found. Using fallback...")
                 kb_name = kb_config.get('kb_name', 'General') if kb_config else 'General'
-                reply = self.stage3_fallback(text, kb_name=kb_name)
-                response = self._build_response(intent, False, reply, start_time)
+                reply = self.stage3_fallback(text, kb_name=kb_name, language=language)
+                response = self._build_response(intent, False, reply, start_time, kb_name=kb_name)
         
-        # DB write happens after lock is released
-        if interaction_to_save:
-            try:
-                self.vector_store.save_interaction(*interaction_to_save)
-            except Exception as e:
-                logger.error(f"Error logging interaction: {e}")
         return response
     # ======================================================================
     # HELPER
@@ -514,7 +504,9 @@ class HybridPipeline:
         intent: str,
         context_found: bool,
         reply: str,
-        start_time: float
+        start_time: float,
+        should_log: bool = False,
+        kb_name: str = "General"
     ) -> dict:
         total_ms = (time.time() - start_time) * 1000
         logger.info(f"Query processed in {total_ms:.1f}ms")
@@ -522,6 +514,8 @@ class HybridPipeline:
             "intent": intent,
             "context_found": context_found,
             "reply": reply,
+            "should_log": should_log,
+            "kb_name": kb_name,
             "timing": {
                 "total_latency": f"{total_ms:.1f}ms"
             }
