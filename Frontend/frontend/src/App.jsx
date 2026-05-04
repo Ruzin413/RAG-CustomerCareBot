@@ -4,6 +4,7 @@ import ChatBot from './ChatBot'
 import KnowledgeBase from './pages/KnowledgeBase'
 import SystemsRegistry from './pages/SystemsRegistry'
 import Login from './pages/Login'
+import Report from './pages/Report'
 import AdminLayout from './components/AdminLayout'
 
 function App() {
@@ -28,6 +29,9 @@ function App() {
         
         {/* Login Route */}
         <Route path="/login" element={<Login onLogin={handleLogin} />} />
+
+        {/* Report Page (accessible via chatbot redirect) */}
+        <Route path="/report" element={<Report />} />
 
         {/* Admin Routes */}
         <Route path="/admin" element={<AdminLayout role={role} token={token} onLogout={handleLogout} />}>

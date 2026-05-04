@@ -12,10 +12,9 @@ from dotenv import load_dotenv
 from document_processor import DocumentProcessor
 from vector_store import VectorStore
 from hybrid_pipeline import HybridPipeline
-
+from translation_service import TranslationService
 # Load environment variables
 load_dotenv()
-
 tags_metadata = [
     {
         "name": "Authentication",
@@ -38,14 +37,12 @@ tags_metadata = [
         "description": "System health and administrative endpoints.",
     }
 ]
-
 app = FastAPI(
     title="RAG CustomerCare API", 
     version="2.0.0",
     description="API for the RAG CustomerCareBot system, supporting hybrid retrieval, document ingestion, and chat history management.",
     openapi_tags=tags_metadata
 )
-
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
@@ -114,6 +111,7 @@ def save_kb_config(config):
 doc_processor = DocumentProcessor()
 vector_store = VectorStore()
 ai_pipeline = HybridPipeline(vector_store=vector_store)
+translation_service = TranslationService()
 
 # Pydantic Models for Request Bodies
 class ChatRequest(BaseModel):
@@ -336,10 +334,19 @@ async def chat(request_data: ChatRequest, x_api_key: Optional[str] = Header(None
         # Since ai_pipeline.process_query is synchronous (with a Lock), 
         # we run it in a threadpool using asyncio.to_thread to keep the event loop alive.
         try:
+            trans_data = translation_service.translate_to_english(message)
+            english_query = trans_data["english_query"]
+            user_lang = trans_data["original_language"]
+
             result = await asyncio.wait_for(
-                asyncio.to_thread(ai_pipeline.process_query, message, kb_config=target_kb_copy),
+                asyncio.to_thread(ai_pipeline.process_query, english_query, kb_config=target_kb_copy),
                 timeout=120.0
             )
+
+            # Re-translate back to user's original language if applicable
+            final_reply = translation_service.translate_from_english(result["reply"], user_lang)
+            result["reply"] = final_reply
+            
         except asyncio.TimeoutError:
             logger.error(f"Chat request timed out after 120s for query: {message[:50]}...")
             raise HTTPException(

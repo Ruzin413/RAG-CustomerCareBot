@@ -146,12 +146,11 @@ class HybridPipeline:
         # 3. Junk Line Killer: Keep only lines that contain at least one letter or number
         cleaned_lines = []
         for line in context.splitlines():
-            if re.search(r'[a-zA-Z0-9]', line):
+            if re.search(r'[a-zA-Z0-9\u0900-\u097F]', line):
                 cleaned_lines.append(line)
         
         # 4. Final polish
         clean = "\n".join(cleaned_lines)
-        clean = re.sub(r'[^\x20-\x7E\n]', '', clean) # ASCII only
         clean = re.sub(r'[ \t]{2,}', ' ', clean)     # Collapse spaces
         clean = re.sub(r'\n{3,}', '\n\n', clean)     # Collapse newlines
         return clean.strip()
@@ -165,7 +164,7 @@ class HybridPipeline:
         # 2. Junk Line Killer: Keep only lines that contain at least one letter or number
         cleaned_lines = []
         for line in text.splitlines():
-            if re.search(r'[a-zA-Z0-9]', line):
+            if re.search(r'[a-zA-Z0-9\u0900-\u097F]', line):
                 cleaned_lines.append(line)
         text = "\n".join(cleaned_lines)
 
@@ -188,13 +187,13 @@ class HybridPipeline:
         # Ensure the response ends with a full sentence
         text = text.strip()
         if text:
-            last_punc = max(text.rfind('.'), text.rfind('!'), text.rfind('?'))
+            last_punc = max(text.rfind('.'), text.rfind('!'), text.rfind('?'), text.rfind('\u0964'))
             # Force trim at the last punctuation to prevent cut-off fragment sentences
             if last_punc != -1:
                 text = text[:last_punc+1]
         
         # Hard cap at 3 sentences
-        sentences = re.split(r'(?<=[.!?])\s+', text.strip())
+        sentences = re.split(r'(?<=[.!?\u0964])\s+', text.strip())
         sentences = [s for s in sentences if s.strip()]
         text = " ".join(sentences[:3])
         
@@ -205,7 +204,7 @@ class HybridPipeline:
         Extractive fallback: score every sentence by keyword overlap with query.
         Used when Qwen is unavailable or output is invalid.
         """
-        sentences = re.split(r'(?<=[.?!])\s+', context)
+        sentences = re.split(r'(?<=[.?!\u0964])\s+', context)
         sentences = [s.strip() for s in sentences if len(s.strip()) > 15]
 
         if not sentences:
