@@ -146,12 +146,11 @@ class HybridPipeline:
         # 3. Junk Line Killer: Keep only lines that contain at least one letter or number
         cleaned_lines = []
         for line in context.splitlines():
-            if re.search(r'[a-zA-Z0-9]', line):
+            if re.search(r'[a-zA-Z0-9\u0900-\u097F]', line):
                 cleaned_lines.append(line)
         
         # 4. Final polish
         clean = "\n".join(cleaned_lines)
-        clean = re.sub(r'[^\x20-\x7E\n]', '', clean) # ASCII only
         clean = re.sub(r'[ \t]{2,}', ' ', clean)     # Collapse spaces
         clean = re.sub(r'\n{3,}', '\n\n', clean)     # Collapse newlines
         return clean.strip()
@@ -165,7 +164,7 @@ class HybridPipeline:
         # 2. Junk Line Killer: Keep only lines that contain at least one letter or number
         cleaned_lines = []
         for line in text.splitlines():
-            if re.search(r'[a-zA-Z0-9]', line):
+            if re.search(r'[a-zA-Z0-9\u0900-\u097F]', line):
                 cleaned_lines.append(line)
         text = "\n".join(cleaned_lines)
 
@@ -188,13 +187,13 @@ class HybridPipeline:
         # Ensure the response ends with a full sentence
         text = text.strip()
         if text:
-            last_punc = max(text.rfind('.'), text.rfind('!'), text.rfind('?'))
+            last_punc = max(text.rfind('.'), text.rfind('!'), text.rfind('?'), text.rfind('\u0964'))
             # Force trim at the last punctuation to prevent cut-off fragment sentences
             if last_punc != -1:
                 text = text[:last_punc+1]
         
         # Hard cap at 3 sentences
-        sentences = re.split(r'(?<=[.!?])\s+', text.strip())
+        sentences = re.split(r'(?<=[.!?\u0964])\s+', text.strip())
         sentences = [s for s in sentences if s.strip()]
         text = " ".join(sentences[:3])
         
@@ -205,7 +204,7 @@ class HybridPipeline:
         Extractive fallback: score every sentence by keyword overlap with query.
         Used when Qwen is unavailable or output is invalid.
         """
-        sentences = re.split(r'(?<=[.?!])\s+', context)
+        sentences = re.split(r'(?<=[.?!\u0964])\s+', context)
         sentences = [s.strip() for s in sentences if len(s.strip()) > 15]
 
         if not sentences:
@@ -280,15 +279,20 @@ class HybridPipeline:
     # ======================================================================
     # STAGE 1: RAG Retrieval
     # ======================================================================
-    def stage1_rag_retrieve(self, text: str, intent: str) -> tuple[str, bool]:
+    def stage1_rag_retrieve(self, text: str, intent: str, language: str = "en") -> tuple[str, bool]:
         """
         Retrieve top-k chunks from vector store.
         Returns (context_string, from_history_boolean).
         """
         if intent not in ["faq", "support"]:
             return "", False
-        results = self.vector_store.search(text, top_k=6, threshold=0.40)
-        logger.info(f"Vector search returned {len(results)} potential matches (Threshold: 0.40)")
+        
+        # Use language-specific threshold: 0.40 for Romanized Nepali, 0.60 otherwise
+        # This handles the noise/variance in transliterated input more gracefully
+        search_threshold = 0.40 if language == "ne_roman" else 0.60
+        
+        results = self.vector_store.search(text, top_k=6, threshold=search_threshold)
+        logger.info(f"Vector search returned {len(results)} potential matches (Threshold: {search_threshold:.2f}, Language: {language})")
         if not results:
             return "", False
         # Log individual matches for debugging
@@ -415,20 +419,16 @@ class HybridPipeline:
     # ======================================================================
     # STAGE 3: Fallback
     # ======================================================================
-    def stage3_fallback(self, text: str, kb_name="General") -> str:
+    def stage3_fallback(self, text: str, kb_name="General", language="en") -> str:
         """
         No relevant context found — log query and return polite not-found message.
         """
-        logger.info(f"No context found for KB '{kb_name}'. Logging unverified query.")
-        try:
-            self.vector_store.save_unverified_query(text, kb_name=kb_name)
-        except Exception as e:
-            logger.error(f"Error saving unverified query: {e}")
+        # We now log unverified queries in app.py after translation handling
         return random.choice(self.templates["not_found"])
     # ======================================================================
     # MAIN PIPELINE
     # ======================================================================
-    def process_query(self, text: str, kb_config: dict = None) -> dict:
+    def process_query(self, text: str, kb_config: dict = None, language: str = "en") -> dict:
         """
         Full 3-Stage RAG Pipeline:
           Stage 0 — Intent Classification
@@ -477,35 +477,28 @@ class HybridPipeline:
                     response = self._build_response(intent, False, reply, start_time)
                 return response
             # --- Stage 1: RAG Retrieval ---
+            kb_name = kb_config.get('kb_name', 'General') if kb_config else 'General'
             logger.info("Stage 1: Searching knowledge base...")
-            context, from_history = self.stage1_rag_retrieve(text, intent)
+            context, from_history = self.stage1_rag_retrieve(text, intent, language=language)
 
             if context:
                 # --- Stage 2: Qwen2 grounded generation ---
                 logger.info("Stage 2: Generating grounded response with Qwen2-0.5B-Instruct...")
                 reply = self.stage2_grounded_generation(text, context)
                 
-                # Auto-log interaction as unverified for future learning
                 if not from_history:
-                    kb_name = kb_config.get('kb_name', 'General') if kb_config else 'General'
-                    interaction_to_save = (text, reply, kb_name)
+                    should_log = True
                 else:
+                    should_log = False
                     logger.info("Skipping auto-log: Context sourced from existing chat history.")
                 
-                response = self._build_response(intent, True, reply, start_time)
+                response = self._build_response(intent, True, reply, start_time, should_log=should_log, kb_name=kb_name)
             else:
                 # --- Stage 3: Fallback ---
                 logger.info("Stage 3: No context found. Using fallback...")
-                kb_name = kb_config.get('kb_name', 'General') if kb_config else 'General'
-                reply = self.stage3_fallback(text, kb_name=kb_name)
-                response = self._build_response(intent, False, reply, start_time)
+                reply = self.stage3_fallback(text, kb_name=kb_name, language=language)
+                response = self._build_response(intent, False, reply, start_time, kb_name=kb_name)
         
-        # DB write happens after lock is released
-        if interaction_to_save:
-            try:
-                self.vector_store.save_interaction(*interaction_to_save)
-            except Exception as e:
-                logger.error(f"Error logging interaction: {e}")
         return response
     # ======================================================================
     # HELPER
@@ -515,7 +508,9 @@ class HybridPipeline:
         intent: str,
         context_found: bool,
         reply: str,
-        start_time: float
+        start_time: float,
+        should_log: bool = False,
+        kb_name: str = "General"
     ) -> dict:
         total_ms = (time.time() - start_time) * 1000
         logger.info(f"Query processed in {total_ms:.1f}ms")
@@ -523,6 +518,8 @@ class HybridPipeline:
             "intent": intent,
             "context_found": context_found,
             "reply": reply,
+            "should_log": should_log,
+            "kb_name": kb_name,
             "timing": {
                 "total_latency": f"{total_ms:.1f}ms"
             }

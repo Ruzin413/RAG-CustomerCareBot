@@ -258,7 +258,7 @@ class VectorStore:
                 if normalized_q == q_text.strip():
                     return True
         return False
-    def save_unverified_query(self, question, kb_name="General"):
+    def save_unverified_query(self, question, kb_name="General", language="en"):
         """Log an unanswered user query for admin review in centralized chat history."""
         if self._is_duplicate(question, kb_name):
             logger.info(f"Skipping duplicate query in '{kb_name}': {question[:30]}...")
@@ -275,6 +275,7 @@ class VectorStore:
             "created_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
             "verified": False,
             "original_question": question,
+            "language": language,
         }
         
         self.chat_history.append(chunk)
@@ -282,7 +283,7 @@ class VectorStore:
         logger.info(f"Saved unverified query to centralized history for KB '{kb_name}'")
         return True
 
-    def save_interaction(self, question, answer, kb_name="General"):
+    def save_interaction(self, question, answer, kb_name="General", language="en"):
         """Automatically log an AI interaction in centralized chat history."""
         if self._is_duplicate(question, kb_name):
             logger.info(f"Skipping duplicate chat interaction in '{kb_name}': {question[:30]}...")
@@ -298,6 +299,7 @@ class VectorStore:
             "tags": ["chat_history"],
             "verified": False,
             "created_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
+            "language": language,
         }
         
         self.chat_history.append(chunk)
