@@ -1,7 +1,8 @@
 import re
+from rapidfuzz import process, fuzz
 
 # Keywords that trigger navigation intent generally
-NAVIGATE_KEYWORDS = { "navigate", "redirect"}
+NAVIGATE_KEYWORDS = ["navigate", "redirect"]
 
 # ---------------------------------------------------------
 # CENTRAL NAVIGATION MAP
@@ -15,26 +16,32 @@ NAV_MAP = {
     # Add more pages here:
     # "settings": {"keywords": ["settings", "config"], "path": "/settings"}
 }
+
 def is_navigation_intent(text: str) -> bool:
     """Check if the user input implies a navigation intent.
     Only triggers when a NAVIGATE_KEYWORD (navigate, redirect) is present."""
     text_lower = text.lower().strip()
     words = set(re.sub(r'[?!.,]', '', text_lower).split())
     
-    # Navigation intent REQUIRES a navigate/redirect keyword
-    if not (words & NAVIGATE_KEYWORDS):
-        return False
-    
-    return True
+    # Navigation intent REQUIRES a navigate/redirect keyword (with fuzzy matching)
+    for word in words:
+        match = process.extractOne(word, NAVIGATE_KEYWORDS, scorer=fuzz.ratio)
+        if match and match[1] >= 60:
+            return True
+            
+    return False
 
 def get_navigation_destination(text: str) -> str:
     """Determine the destination page based on NAV_MAP."""
     text_lower = text.lower()
+    words = set(re.sub(r'[?!.,]', '', text_lower).split())
     
     for dest, config in NAV_MAP.items():
-        if any(k in text_lower for k in config["keywords"]):
-            return dest
-            
+        for word in words:
+            match = process.extractOne(word, config["keywords"], scorer=fuzz.ratio)
+            if match and match[1] >= 60:
+                return dest
+                
     return None
 
 def build_navigation_reply(dest: str) -> str:

@@ -484,3 +484,7 @@ class VectorStore:
     def get_existing_files(self):
         """Returns a set of unique file names already present in the metadata."""
         return set(m.get("source", {}).get("file", "") for m in self.metadata if "source" in m)
+
+    def get_all_chunks(self) -> list:
+        """Return all metadata chunks for vocab extraction."""
+        return self.metadata

@@ -111,7 +111,20 @@ def save_kb_config(config):
 doc_processor = DocumentProcessor()
 vector_store = VectorStore()
 ai_pipeline = HybridPipeline(vector_store=vector_store)
-translation_service = TranslationService()
+
+def extract_kb_terms(v_store) -> list[str]:
+    import re
+    terms = set()
+    for chunk in v_store.get_all_chunks():
+        for word in chunk.get('text', '').split():
+            clean = re.sub(r'[^\w]', '', word.lower())
+            if clean.isascii() and len(clean) > 3:
+                terms.add(clean)
+    logger.info(f"Extracted {len(terms)} KB terms for typo correction")
+    return list(terms)
+
+kb_terms = extract_kb_terms(vector_store)
+translation_service = TranslationService(kb_terms=kb_terms)
 
 # Pydantic Models for Request Bodies
 class ChatRequest(BaseModel):
@@ -210,6 +223,12 @@ async def process_and_add_files(kb_name, uploaded_files: List[UploadFile], targe
     # Persist changes
     if total_chunks > 0:
         vector_store._save()
+        
+        # Refresh translation service KB terms after new upload
+        global translation_service
+        kb_terms = extract_kb_terms(vector_store)
+        translation_service.kb_terms = [t.lower() for t in kb_terms]
+        logger.info(f"Translation service KB terms refreshed: {len(kb_terms)} terms")
         
         if is_new_kb:
             kb_config = load_kb_config()

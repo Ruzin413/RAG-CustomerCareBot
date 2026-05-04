@@ -4,6 +4,7 @@ from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 from indic_transliteration import sanscript
 from indic_transliteration.sanscript import transliterate
 from langdetect import detect, DetectorFactory
+from rapidfuzz import process, fuzz
 
 # Ensure consistent results for langdetect
 DetectorFactory.seed = 0
@@ -11,7 +12,10 @@ DetectorFactory.seed = 0
 logger = logging.getLogger(__name__)
 
 class TranslationService:
-    def __init__(self):
+    def __init__(self, kb_terms: list[str] = None):
+        if kb_terms is None:
+            kb_terms = []
+            
         logger.info("Initializing Translation Service...")
         
         # 1. Load NLLB Translation Model explicitly (bypassing the pipeline bug)
@@ -26,6 +30,43 @@ class TranslationService:
             "hajur", "kina", "kahile", "kaha", "kasko", "aayo", "gayo",
             "kohi", "chha", "chaina", "kura", "bhayo"
         }
+        
+        # KB terms for typo correction
+        self.kb_terms = [term.lower() for term in kb_terms]
+
+    def _is_english_word(self, word: str) -> bool:
+        """Detect if a token is English (not Nepali roman)."""
+        # Use word boundaries so "ma" doesn't match inside "mark"
+        nepali_patterns = r'\b(aa|ai|au|bh|dh|gh|kh|ph|xa|lai|haru|chha|garne|garnu|bhane)\b'
+        return not re.search(nepali_patterns, word.lower())
+
+    def _fix_typos(self, text: str) -> str:
+        """
+        Fix typos in English domain terms.
+        Used for ne_deva path only — ne_roman typo correction
+        is handled inside transliterate_to_devanagari directly.
+        """
+        if not self.kb_terms:
+            return text
+            
+        tokens = text.split()
+        corrected = []
+        for token in tokens:
+            clean = re.sub(r'[^\w]', '', token.lower())
+            # Only attempt correction on English-looking words > 3 chars
+            if len(clean) > 3 and self._is_english_word(clean):
+                match = process.extractOne(
+                    clean, self.kb_terms, scorer=fuzz.ratio
+                )
+                if match and match[1] >= 60:
+                    corrected.append(match[0])  # corrected term
+                    if match[0] != clean:
+                        logger.info(f"Typo fixed: '{clean}' → '{match[0]}'")
+                else:
+                    corrected.append(token)
+            else:
+                corrected.append(token)
+        return " ".join(corrected)
         
     def _translate(self, text: str, src_lang: str, tgt_lang: str) -> str:
         """Helper to run the NLLB translation explicitly."""
@@ -59,8 +100,16 @@ class TranslationService:
 
         # 2. Fallback to Nepglish Heuristics FIRST (langdetect is unreliable for short text)
         words = set(re.sub(r'[^\w\s]', '', text.lower()).split())
+        
+        # Exact match check first
         if len(words.intersection(self.nepglish_indicators)) > 0:
             return "ne_roman"
+            
+        # Fuzzy match check for typo tolerance
+        for word in words:
+            match = process.extractOne(word, list(self.nepglish_indicators), scorer=fuzz.ratio)
+            if match and match[1] >= 65: # 65 is strict enough for transliterated words
+                return "ne_roman"
 
         # 3. Check LangDetect for longer text
         try:
@@ -75,14 +124,36 @@ class TranslationService:
         return "en"
 
     def transliterate_to_devanagari(self, text: str) -> str:
-        """Converts Romanized Nepglish to Devanagari script."""
-        # indic-transliteration uses ITRANS. It handles "xa" / "cha" decently well.
-        # Custom pre-processing replacements for common slang
-        text = text.lower()
-        text = text.replace("xa", "cha")
-        # Ensure 'k' alone or with space becomes 'ke'
-        text = re.sub(r'\bk\b', 'ke', text)
-        return transliterate(text, sanscript.ITRANS, sanscript.DEVANAGARI)
+        """Converts Romanized Nepglish to Devanagari script while preserving English loanwords."""
+        # Fix typos and identify which tokens are English
+        tokens = text.split()
+        corrected_tokens = []
+        english_flags = []
+        
+        for token in tokens:
+            clean = re.sub(r'[^\w]', '', token.lower())
+            if len(clean) > 3 and self._is_english_word(clean) and self.kb_terms:
+                match = process.extractOne(clean, self.kb_terms, scorer=fuzz.ratio)
+                if match and match[1] >= 60:
+                    corrected_tokens.append(match[0])  # corrected English term
+                    english_flags.append(True)          # mark as English, skip transliteration
+                    if match[0] != clean:
+                        logger.info(f"Typo fixed: '{clean}' → '{match[0]}'")
+                    continue
+            corrected_tokens.append(token.lower())
+            english_flags.append(False)
+
+        # Transliterate only non-English tokens
+        result = []
+        for token, is_english in zip(corrected_tokens, english_flags):
+            if is_english:
+                result.append(token)  # keep as-is
+            else:
+                token = token.replace("xa", "cha")
+                token = re.sub(r'\bk\b', 'ke', token)
+                result.append(transliterate(token, sanscript.ITRANS, sanscript.DEVANAGARI))
+
+        return " ".join(result)
 
     def transliterate_to_roman(self, text: str) -> str:
         """Converts Devanagari script back to Romanized Nepglish."""
@@ -112,7 +183,8 @@ class TranslationService:
                 english_text = self._translate(deva_text, src_lang="npi_Deva", tgt_lang="eng_Latn")
                 
             elif lang == "ne_deva":
-                # Directly translate Devanagari to English
+                # Fix typos on the raw Devanagari text before translation
+                text = self._fix_typos(text)
                 english_text = self._translate(text, src_lang="npi_Deva", tgt_lang="eng_Latn")
         except Exception as e:
             logger.error(f"Translation to English failed: {e}")

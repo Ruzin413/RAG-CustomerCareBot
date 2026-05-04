@@ -262,19 +262,37 @@ class HybridPipeline:
 
     def classify_intent(self, text: str) -> str:
         """
-        Intent classifier using heuristics only.
+        Intent classifier using heuristics and fuzzy matching (rapidfuzz) for typo tolerance.
         """
-        # Fallback to heuristics
+        from rapidfuzz import process, fuzz
+        
         text_lower = text.lower().strip()
         words = set(re.sub(r'[?!.,]', '', text_lower).split())
-        greeting_words = {"hello", "hi", "hey", "greetings", "howdy", "sup"}
-        if words & greeting_words or text_lower.startswith(("hi ", "hello ", "hey ")):
+        
+        greeting_words = ["hello", "hi", "hey", "greetings", "howdy", "sup"]
+        goodbye_words = ["bye", "goodbye", "thanks", "thank", "exit", "quit", "cya", "later", "cheers"]
+        
+        # Fast exact match
+        if words & set(greeting_words) or text_lower.startswith(("hi ", "hello ", "hey ")):
             return "greeting"
-        goodbye_words = {"bye", "goodbye", "thanks", "thank", "exit", "quit", "cya", "later", "cheers"}
-        if words & goodbye_words or text_lower.startswith(("bye", "thank", "thanks")):
+        if words & set(goodbye_words) or text_lower.startswith(("bye", "thank", "thanks")):
             return "goodbye"
+
+        # Fuzzy matching for typo tolerance
+        for word in words:
+            # Check greeting
+            match = process.extractOne(word, greeting_words, scorer=fuzz.ratio)
+            if match and match[1] >= 60:  # 60 is a good threshold for typos
+                return "greeting"
+                
+            # Check goodbye
+            match = process.extractOne(word, goodbye_words, scorer=fuzz.ratio)
+            if match and match[1] >= 60:
+                return "goodbye"
+
         if is_navigation_intent(text):
             return "navigate"
+            
         return "faq"
     # ======================================================================
     # STAGE 1: RAG Retrieval
@@ -286,8 +304,8 @@ class HybridPipeline:
         """
         if intent not in ["faq", "support"]:
             return "", False
-        results = self.vector_store.search(text, top_k=6, threshold=0.40)
-        logger.info(f"Vector search returned {len(results)} potential matches (Threshold: 0.40)")
+        results = self.vector_store.search(text, top_k=6, threshold=0.50)
+        logger.info(f"Vector search returned {{len(results)}} potential matches (Threshold: 0.50)")
         if not results:
             return "", False
         # Log individual matches for debugging
