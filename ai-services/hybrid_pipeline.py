@@ -498,8 +498,8 @@ class HybridPipeline:
                 logger.info("Stage 2: Generating grounded response with Qwen2-0.5B-Instruct...")
                 reply = self.stage2_grounded_generation(text, context)
                 
+                kb_name = kb_config.get('kb_name', 'General') if kb_config else 'General'
                 if not from_history:
-                    kb_name = kb_config.get('kb_name', 'General') if kb_config else 'General'
                     should_log = True
                 else:
                     should_log = False
