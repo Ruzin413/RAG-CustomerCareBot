@@ -262,50 +262,37 @@ class HybridPipeline:
 
     def classify_intent(self, text: str) -> str:
         """
-        Intent classifier using heuristics and fuzzy matching (rapidfuzz) for typo tolerance.
+        Intent classifier using heuristics only.
         """
-        from rapidfuzz import process, fuzz
-        
+        # Fallback to heuristics
         text_lower = text.lower().strip()
         words = set(re.sub(r'[?!.,]', '', text_lower).split())
-        
-        greeting_words = ["hello", "hi", "hey", "greetings", "howdy", "sup"]
-        goodbye_words = ["bye", "goodbye", "thanks", "thank", "exit", "quit", "cya", "later", "cheers"]
-        
-        # Fast exact match
-        if words & set(greeting_words) or text_lower.startswith(("hi ", "hello ", "hey ")):
+        greeting_words = {"hello", "hi", "hey", "greetings", "howdy", "sup"}
+        if words & greeting_words or text_lower.startswith(("hi ", "hello ", "hey ")):
             return "greeting"
-        if words & set(goodbye_words) or text_lower.startswith(("bye", "thank", "thanks")):
+        goodbye_words = {"bye", "goodbye", "thanks", "thank", "exit", "quit", "cya", "later", "cheers"}
+        if words & goodbye_words or text_lower.startswith(("bye", "thank", "thanks")):
             return "goodbye"
-
-        # Fuzzy matching for typo tolerance
-        for word in words:
-            # Check greeting
-            match = process.extractOne(word, greeting_words, scorer=fuzz.ratio)
-            if match and match[1] >= 60:  # 60 is a good threshold for typos
-                return "greeting"
-                
-            # Check goodbye
-            match = process.extractOne(word, goodbye_words, scorer=fuzz.ratio)
-            if match and match[1] >= 60:
-                return "goodbye"
-
         if is_navigation_intent(text):
             return "navigate"
-            
         return "faq"
     # ======================================================================
     # STAGE 1: RAG Retrieval
     # ======================================================================
-    def stage1_rag_retrieve(self, text: str, intent: str) -> tuple[str, bool]:
+    def stage1_rag_retrieve(self, text: str, intent: str, language: str = "en") -> tuple[str, bool]:
         """
         Retrieve top-k chunks from vector store.
         Returns (context_string, from_history_boolean).
         """
         if intent not in ["faq", "support"]:
             return "", False
-        results = self.vector_store.search(text, top_k=6, threshold=0.50)
-        logger.info(f"Vector search returned {{len(results)}} potential matches (Threshold: 0.50)")
+        
+        # Use language-specific threshold: 0.40 for Romanized Nepali, 0.60 otherwise
+        # This handles the noise/variance in transliterated input more gracefully
+        search_threshold = 0.40 if language == "ne_roman" else 0.60
+        
+        results = self.vector_store.search(text, top_k=6, threshold=search_threshold)
+        logger.info(f"Vector search returned {len(results)} potential matches (Threshold: {search_threshold:.2f}, Language: {language})")
         if not results:
             return "", False
         # Log individual matches for debugging
@@ -490,15 +477,15 @@ class HybridPipeline:
                     response = self._build_response(intent, False, reply, start_time)
                 return response
             # --- Stage 1: RAG Retrieval ---
+            kb_name = kb_config.get('kb_name', 'General') if kb_config else 'General'
             logger.info("Stage 1: Searching knowledge base...")
-            context, from_history = self.stage1_rag_retrieve(text, intent)
+            context, from_history = self.stage1_rag_retrieve(text, intent, language=language)
 
             if context:
                 # --- Stage 2: Qwen2 grounded generation ---
                 logger.info("Stage 2: Generating grounded response with Qwen2-0.5B-Instruct...")
                 reply = self.stage2_grounded_generation(text, context)
                 
-                kb_name = kb_config.get('kb_name', 'General') if kb_config else 'General'
                 if not from_history:
                     should_log = True
                 else:
@@ -509,7 +496,6 @@ class HybridPipeline:
             else:
                 # --- Stage 3: Fallback ---
                 logger.info("Stage 3: No context found. Using fallback...")
-                kb_name = kb_config.get('kb_name', 'General') if kb_config else 'General'
                 reply = self.stage3_fallback(text, kb_name=kb_name, language=language)
                 response = self._build_response(intent, False, reply, start_time, kb_name=kb_name)
         
