@@ -3,11 +3,13 @@ import json
 import logging
 import time
 import asyncio
+import re
 from typing import List, Optional, Dict
 from fastapi import FastAPI, Request, File, UploadFile, Form, HTTPException, Depends, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from dotenv import load_dotenv
+from rapidfuzz import fuzz, process
 # Import our modular layers
 from document_processor import DocumentProcessor
 from vector_store import VectorStore
@@ -76,6 +78,36 @@ CHAT_TOKEN = os.getenv("CHAT_TOKEN", "customer-bot-token")
 
 from fastapi import Header, Cookie
 
+def _load_json_env(name: str, default: Dict[str, str]) -> Dict[str, str]:
+    raw = os.getenv(name, "").strip()
+    if not raw:
+        return default
+    try:
+        parsed = json.loads(raw)
+        return parsed if isinstance(parsed, dict) else default
+    except Exception:
+        logger.warning(f"Invalid JSON in env '{name}'. Using default.")
+        return default
+
+COMMON_ABBREVIATIONS = _load_json_env("QUERY_ABBREVIATIONS_JSON", {})
+PROTECTED_TERMS = set(
+    token.strip().lower()
+    for token in os.getenv("TYPO_PROTECTED_TERMS", "").split(",")
+    if token.strip()
+)
+TYPO_HIGH_CONFIDENCE = float(os.getenv("TYPO_HIGH_CONFIDENCE", "0.92"))
+TYPO_MEDIUM_CONFIDENCE = float(os.getenv("TYPO_MEDIUM_CONFIDENCE", "0.78"))
+TYPO_MIN_SCORE_CUTOFF = int(os.getenv("TYPO_MIN_SCORE_CUTOFF", "75"))
+TYPO_VOCAB_MIN_TOKEN_LEN = int(os.getenv("TYPO_VOCAB_MIN_TOKEN_LEN", "3"))
+TYPO_VOCAB_CACHE_TTL_SEC = int(os.getenv("TYPO_VOCAB_CACHE_TTL_SEC", "300"))
+FUZZY_LEXICAL_THRESHOLD = float(os.getenv("FUZZY_LEXICAL_THRESHOLD", "0.72"))
+
+_typo_vocab_cache = {
+    "kb_name": None,
+    "timestamp": 0.0,
+    "tokens": [],
+}
+
 async def verify_token(
     x_api_key: Optional[str] = Header(None), 
     admin_token: Optional[str] = Cookie(None)
@@ -134,6 +166,191 @@ class AddKBRequest(BaseModel):
     binfile: str
 
 # Helper Functions
+def normalize_user_query(text: str) -> str:
+    """Normalize user text before translation/retrieval."""
+    normalized = (text or "").lower().strip()
+    normalized = re.sub(r"\s+", " ", normalized)
+    normalized = re.sub(r"[^\w\s?.!,:/-]", " ", normalized)
+    normalized = re.sub(r"\s+", " ", normalized).strip()
+    words = []
+    for token in normalized.split():
+        cleaned = token.strip()
+        words.append(COMMON_ABBREVIATIONS.get(cleaned, cleaned))
+    return " ".join(words).strip()
+
+def _extract_vocab_tokens_from_text(text: str) -> List[str]:
+    if not text:
+        return []
+    return re.findall(r"[a-z][a-z0-9_-]{2,}", text.lower())
+
+def refresh_typo_sources(target_kb: Optional[Dict[str, str]]) -> None:
+    """Refresh active KB and chat history before typo/fuzzy operations."""
+    try:
+        if target_kb and target_kb.get("binfile") and target_kb.get("jsonfile"):
+            if (
+                vector_store.index_path != target_kb["binfile"]
+                or vector_store.meta_path != target_kb["jsonfile"]
+            ):
+                vector_store.load_kb(target_kb["binfile"], target_kb["jsonfile"])
+        vector_store._load_chat_history()
+    except Exception as e:
+        logger.warning(f"Failed to refresh typo sources: {e}")
+
+def get_typo_vocabulary(active_kb_name: str) -> List[str]:
+    """Build and cache typo vocabulary from current KB metadata and verified history."""
+    now = time.time()
+    cache_is_fresh = (
+        _typo_vocab_cache["tokens"]
+        and _typo_vocab_cache["kb_name"] == active_kb_name
+        and (now - _typo_vocab_cache["timestamp"]) < TYPO_VOCAB_CACHE_TTL_SEC
+    )
+    if cache_is_fresh:
+        return _typo_vocab_cache["tokens"]
+
+    tokens = set()
+    for item in vector_store.metadata:
+        text = item.get("text") or ""
+        for token in _extract_vocab_tokens_from_text(text):
+            if len(token) >= TYPO_VOCAB_MIN_TOKEN_LEN and token not in PROTECTED_TERMS:
+                tokens.add(token)
+
+    for item in vector_store.chat_history_verified_meta:
+        item_kb = (item.get("kb_name") or "").strip()
+        if active_kb_name and item_kb and item_kb != active_kb_name:
+            continue
+        text = item.get("text") or f"{item.get('question', '')} {item.get('answer', '')}"
+        for token in _extract_vocab_tokens_from_text(text):
+            if len(token) >= TYPO_VOCAB_MIN_TOKEN_LEN and token not in PROTECTED_TERMS:
+                tokens.add(token)
+
+    tokens.update(COMMON_ABBREVIATIONS.values())
+    token_list = sorted(tokens)
+    _typo_vocab_cache["kb_name"] = active_kb_name
+    _typo_vocab_cache["timestamp"] = now
+    _typo_vocab_cache["tokens"] = token_list
+    return token_list
+
+def build_typo_strategy(query: str, active_kb_name: str) -> Dict[str, object]:
+    """
+    Decide typo policy:
+    - high confidence: corrected only
+    - medium confidence: search corrected + original
+    - low confidence: ask clarification
+    """
+    original = normalize_user_query(query)
+    if not original:
+        return {
+            "original_query": "",
+            "corrected_query": "",
+            "confidence": 0.0,
+            "mode": "low",
+            "changed": False,
+            "suggestion": "",
+        }
+
+    vocabulary = get_typo_vocabulary(active_kb_name)
+    if not vocabulary:
+        return {
+            "original_query": original,
+            "corrected_query": original,
+            "confidence": 1.0,
+            "mode": "high",
+            "changed": False,
+            "suggestion": "",
+        }
+
+    corrected_tokens = []
+    confidence_parts = []
+    changed = False
+    for token in original.split():
+        if (
+            len(token) < TYPO_VOCAB_MIN_TOKEN_LEN
+            or token in PROTECTED_TERMS
+            or not re.fullmatch(r"[a-z0-9_-]+", token)
+        ):
+            corrected_tokens.append(token)
+            continue
+
+        best = process.extractOne(
+            token,
+            vocabulary,
+            scorer=fuzz.WRatio,
+            score_cutoff=TYPO_MIN_SCORE_CUTOFF
+        )
+        if best and best[0] != token:
+            candidate, score, _ = best
+            corrected_tokens.append(candidate)
+            confidence_parts.append(float(score) / 100.0)
+            changed = True
+        else:
+            corrected_tokens.append(token)
+
+    corrected = " ".join(corrected_tokens)
+    if not changed:
+        return {
+            "original_query": original,
+            "corrected_query": original,
+            "confidence": 1.0,
+            "mode": "high",
+            "changed": False,
+            "suggestion": "",
+        }
+
+    confidence = sum(confidence_parts) / len(confidence_parts) if confidence_parts else 0.0
+    if confidence >= TYPO_HIGH_CONFIDENCE:
+        mode = "high"
+    elif confidence >= TYPO_MEDIUM_CONFIDENCE:
+        mode = "medium"
+    else:
+        mode = "low"
+
+    return {
+        "original_query": original,
+        "corrected_query": corrected,
+        "confidence": round(confidence, 3),
+        "mode": mode,
+        "changed": changed,
+        "suggestion": corrected,
+    }
+
+def fuzzy_lexical_context(query: str, active_kb_name: str, top_n: int = 3) -> str:
+    """
+    Lexical fallback for typo-heavy queries when vector retrieval misses.
+    Uses fuzzy token overlap against KB/history text and returns merged context.
+    """
+    candidates = []
+    query_norm = normalize_user_query(query)
+    if not query_norm:
+        return ""
+
+    for item in vector_store.metadata:
+        if item.get("verified") is not True:
+            continue
+        text = (item.get("text") or "").strip()
+        if not text:
+            continue
+        score = fuzz.token_set_ratio(query_norm, text[:1200]) / 100.0
+        if score >= FUZZY_LEXICAL_THRESHOLD:
+            candidates.append((score, text))
+
+    for item in vector_store.chat_history_verified_meta:
+        item_kb = (item.get("kb_name") or "").strip()
+        if active_kb_name and item_kb and item_kb != active_kb_name:
+            continue
+        text = (item.get("text") or f"Question: {item.get('question', '')}\nAnswer: {item.get('answer', '')}").strip()
+        if not text:
+            continue
+        score = fuzz.token_set_ratio(query_norm, text[:1200]) / 100.0
+        if score >= FUZZY_LEXICAL_THRESHOLD:
+            candidates.append((score, text))
+
+    if not candidates:
+        return ""
+
+    candidates.sort(key=lambda x: x[0], reverse=True)
+    top_contexts = [text for _, text in candidates[:top_n]]
+    return "\n\n".join(top_contexts)
+
 async def process_and_add_files(kb_name, uploaded_files: List[UploadFile], target_kb, is_new_kb=False):
     """Helper to process files and add them to a specific KB."""
     # Ensure KB files exist
@@ -302,7 +519,7 @@ async def chat(request_data: ChatRequest, x_api_key: Optional[str] = Header(None
     if provided_token not in [CHAT_TOKEN, ADMIN_TOKEN]:
         raise HTTPException(status_code=401, detail="Unauthorized: Invalid or missing API Token")
 
-    message = request_data.message.strip()
+    message = normalize_user_query(request_data.message)
     
     if not message:
         raise HTTPException(status_code=400, detail="Message cannot be empty")
@@ -335,21 +552,84 @@ async def chat(request_data: ChatRequest, x_api_key: Optional[str] = Header(None
         # we run it in a threadpool using asyncio.to_thread to keep the event loop alive.
         try:
             trans_data = translation_service.translate_to_english(message)
-            english_query = trans_data["english_query"]
+            english_query = normalize_user_query(trans_data["english_query"])
             user_lang = trans_data["original_language"]
 
+            active_kb_name = target_kb_copy.get("kb_name", "General") if target_kb_copy else "General"
+            refresh_typo_sources(target_kb_copy)
+            typo_strategy = {
+                "original_query": english_query,
+                "corrected_query": english_query,
+                "confidence": 1.0,
+                "mode": "high",
+                "changed": False,
+                "suggestion": "",
+            }
+
+            if user_lang == "en":
+                typo_strategy = build_typo_strategy(english_query, active_kb_name)
+                logger.info(
+                    f"Typo strategy: mode={typo_strategy['mode']}, "
+                    f"confidence={typo_strategy['confidence']}, changed={typo_strategy['changed']}"
+                )
+                if typo_strategy["mode"] == "low" and typo_strategy["changed"]:
+                    suggestion = typo_strategy["suggestion"] or english_query
+                    return {
+                        "status": "success",
+                        "intent": "clarification",
+                        "answer": f"Did you mean: '{suggestion}'?",
+                        "redirect_to": None,
+                        "source": "Typo Clarification",
+                        "metadata": {
+                            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+                            "typo": typo_strategy
+                        }
+                    }
+
+            primary_query = english_query
+            secondary_query = None
+            if user_lang == "en" and typo_strategy["changed"]:
+                corrected = typo_strategy["corrected_query"]
+                if typo_strategy["mode"] == "high":
+                    primary_query = corrected
+                elif typo_strategy["mode"] == "medium":
+                    primary_query = corrected
+                    secondary_query = english_query if corrected != english_query else None
+
             # Query Augmentation: If it was translated, append the original text.
-            # This ensures English loanwords (e.g., 'payroll', 'login') that might have been 
-            # destroyed by phonetic transliteration are still captured by the semantic search!
+            # This ensures English loanwords (e.g., 'payroll', 'login') that might have been
+            # destroyed by phonetic transliteration are still captured by the semantic search.
             if user_lang != "en":
-                search_query = f"{english_query} (Original: {message})"
-            else:
-                search_query = english_query
+                primary_query = f"{primary_query} (Original: {message})"
 
             result = await asyncio.wait_for(
-                asyncio.to_thread(ai_pipeline.process_query, search_query, kb_config=target_kb_copy, language=user_lang),
+                asyncio.to_thread(ai_pipeline.process_query, primary_query, kb_config=target_kb_copy, language=user_lang),
                 timeout=120.0
             )
+
+            if not result.get("context_found") and secondary_query:
+                logger.info("Primary typo-corrected retrieval missed. Retrying with original query.")
+                result = await asyncio.wait_for(
+                    asyncio.to_thread(ai_pipeline.process_query, secondary_query, kb_config=target_kb_copy, language=user_lang),
+                    timeout=120.0
+                )
+
+            if not result.get("context_found"):
+                lexical_context = fuzzy_lexical_context(primary_query, active_kb_name)
+                if lexical_context:
+                    logger.info("Vector retrieval missed. Using fuzzy lexical fallback context.")
+                    fallback_reply = await asyncio.wait_for(
+                        asyncio.to_thread(ai_pipeline.stage2_grounded_generation, primary_query, lexical_context),
+                        timeout=120.0
+                    )
+                    result = {
+                        "intent": result.get("intent", "faq"),
+                        "context_found": True,
+                        "reply": fallback_reply,
+                        "should_log": False,
+                        "kb_name": active_kb_name,
+                        "timing": result.get("timing", {"total_latency": "0.0ms"}),
+                    }
 
             # Re-translate back to user's original language if applicable
             final_reply = translation_service.translate_from_english(result["reply"], user_lang)
