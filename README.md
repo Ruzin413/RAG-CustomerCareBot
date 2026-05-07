@@ -1,4 +1,4 @@
-# 🤖 RAG-First Customer Care Bot
+#  RAG-First Customer Care Bot
 
 [![Python](https://img.shields.io/badge/Python-3.14.3+-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-v0.100.0+-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
@@ -11,22 +11,22 @@ A high-precision, production-ready Customer Service framework powered by a **3-s
 
 ---
 
-## 🚀 Key Features
+##  Key Features
 
-- **🌐 Multilingual Native Support**: Native processing for English, Devanagari Nepali, and Romanized Nepali (Nepglish) with automated transliteration and translation.
-- **🔍 Typo-Tolerant Pipeline**: Intelligent query processing using `rapidfuzz` to correct domain-specific terminology (e.g., "eHajri", "Payroll") even in transliterated inputs.
-- **📄 Multi-Format Ingestion**: Batch process PDFs, DOCX, PPTX, and TXT files directly into high-performance vector stores.
-- **🧠 3-Stage Hybrid Architecture**:
+- ** Multilingual Native Support**: Native processing for English, Devanagari Nepali, and Romanized Nepali (Nepglish) with automated transliteration and translation.
+- ** Typo-Tolerant Pipeline**: Intelligent query processing using `rapidfuzz` to correct domain-specific terminology (e.g., "eHajri", "Payroll") even in transliterated inputs.
+- ** Multi-Format Ingestion**: Batch process PDFs, DOCX, PPTX, and TXT files directly into high-performance vector stores.
+- ** 3-Stage Hybrid Architecture**:
     - **Stage 0 (Intent)**: Real-time classification (Greeting, FAQ, Support, Goodbye, Navigate) using fuzzy logic.
     - **Stage 1 (Retrieve)**: Semantic search via FAISS & Sentence-Transformers with cross-encoder re-ranking for maximum precision.
     - **Stage 2 (Grounded Gen)**: LLM responses powered by **Qwen2-0.5B-Instruct**, strictly anchored to verified documents.
-- **🔐 Dual-Token Security**: Role-based access control with separate tokens for Administrative actions and Chat interactions.
-- **🛠️ Administrative Learning Loop**: A professional React dashboard to review unverified interactions, edit responses, and promote them to the permanent knowledge base.
-- **⚡ Local-First Inference**: Designed for high-speed local execution on CPU/GPU using optimized model weights.
+- ** Dual-Token Security**: Role-based access control with separate tokens for Administrative actions and Chat interactions.
+- ** Administrative Learning Loop**: A professional React dashboard to review unverified interactions, edit responses, and promote them to the permanent knowledge base.
+- ** Local-First Inference**: Designed for high-speed local execution on CPU/GPU using optimized model weights.
 
 ---
 
-## 🏗️ System Architecture
+##  System Architecture
 
 ```mermaid
 graph TD
@@ -55,9 +55,9 @@ graph TD
 
 ---
 
-## 🛠️ Installation & Setup
+##  Installation & Setup
 
-### 📋 Prerequisites
+###  Prerequisites
 
 - **Python 3.14.3+**
 - **Node.js (v16+) & NPM**
@@ -111,7 +111,7 @@ graph TD
 
 ---
 
-## 📖 API Documentation (Swagger)
+##  API Documentation (Swagger)
 
 The system features interactive API documentation. Once the backend is running, access:
 - **Swagger UI**: [http://localhost:8001/docs](http://localhost:8001/docs)
@@ -130,7 +130,7 @@ The system features interactive API documentation. Once the backend is running, 
 
 ---
 
-## 🐳 Docker Deployment
+##  Docker Deployment
 
 1.  **Build**: `docker build -t rag-backend ./ai-services`
 2.  **Run**: `docker run -d -p 8001:8001 --env-file ./ai-services/.env --name rag-ai rag-backend`
