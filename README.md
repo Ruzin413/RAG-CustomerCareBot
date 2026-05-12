@@ -13,7 +13,7 @@ A high-precision, production-ready Customer Service framework powered by a **3-s
 
 ##  Key Features
 
-- ** Multilingual Native Support**: Native processing for English, Devanagari Nepali, and Romanized Nepali (Nepglish) with automated transliteration and translation.
+- ** Multilingual Native Support**: Native processing for English, Devanagari Nepali, and Romanized Nepali with automated transliteration and translation.
 - ** Typo-Tolerant Pipeline**: Intelligent query processing using `rapidfuzz` to correct domain-specific terminology (e.g., "eHajri", "Payroll") even in transliterated inputs.
 - ** Multi-Format Ingestion**: Batch process PDFs, DOCX, PPTX, and TXT files directly into high-performance vector stores.
 - ** 3-Stage Hybrid Architecture**:
